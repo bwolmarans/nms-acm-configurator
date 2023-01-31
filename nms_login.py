@@ -101,7 +101,6 @@ if __name__ == '__main__':
                 print("You did not enter any instances, OK, then we can't continue, exiting.")
                 sys.exit()
 
-            nms_instances["nms_instances"]"hostname"] = nms_fqdn
 
             if python_major_version == 2:
                 username = raw_input("Enter nms username:")
@@ -110,7 +109,13 @@ if __name__ == '__main__':
             else:
                 assert("You r not using Python v 2 nor 3, so it is game over.")
 
-            nms_instances["nms_instances"]["username"] = username
+            #x = {'stuff': [{'a': '1', 'b': '2', 'c': '3'}, {'e': '4', 'f': '5', 'g': '6'}]}
+            #print(x)
+            #x['stuff'].append({'h': '7', 'i': '8', 'j': '9'})
+            #print(x)
+
+            # only if we want to append: nms_instances["nms_instances"].append({"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"})
+            nms_instances["nms_instances"] = [{"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"}]
 
         else:
             print("OK, well, then we have no params, then we can't continue, exiting.")
