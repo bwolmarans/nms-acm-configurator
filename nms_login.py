@@ -29,18 +29,68 @@ proxies = ''
 def nms_login(username, password, fqdn):
     nms_url = 'https://' + nms_fqdn
     try:
-        res = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        res.raise_for_status()
-    except:
-        print("")
-        print("")
-        print("I couldn't connect to " + nms_fqdn + ", sorry.")
-        print("-------------------------------")
+        r = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r.raise_for_status()
+    except requests.HTTPError as err:
         print("")
         print("")
         print("")
         print("")
-        print(res)
+        print("Some strange HTTP level layer 7 error")
+        print("-----------------------------------------------------------------------")
+        print("")
+        print("")
+        print("The full blown raw error message is:")
+        print("")
+        print("")
+        print(r)
+        raise SystemExit(err)
+    except requests.ConnectionError:
+        print("")
+        print("")
+        print("")
+        print("")
+        print("DNS failure trying to resolve domain name \"" + nms_fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
+        print("-----------------------------------------------------------------------")
+        print("")
+        print("")
+        print("The full blown raw error message is:")
+        print("")
+        print("")
+        #print(r)
+    except requests.Timeout:
+        # Maybe set up for a retry, or continue in a retry loop
+        print("")
+        print("")
+        print("")
+        print("")
+        print("the FQDN resolved in DNS, but I timed out trying to connect to " + nms_fqdn + ", sorry. ")
+        print("-----------------------------------------------------------------------")
+        print("")
+        print("")
+        print("The full blown raw error message is:")
+        print("")
+        print("")
+        print(r)
+    except requests.TooManyRedirects:
+        # Tell the user their URL was bad and try a different one
+        print("")
+        print("")
+        print("")
+        print("")
+        print("Wow, too many redirects!")
+        print("-----------------------------------------------------------------------")
+        print("")
+        print("")
+        print("The full blown raw error message is:")
+        print("")
+        print("")
+        print(r)
+    except requests.RequestException as e:
+        # catastrophic error. bail.
+        print("")
+        print("")
+        raise SystemExit(e)
 
 def waas_api_get(token, path):
     res = requests.get(urljoin(API_BASE, path), headers={"Content-Type": "application/json", 'auth-api': token}, proxies=proxies)
