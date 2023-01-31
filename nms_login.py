@@ -13,6 +13,7 @@ except ImportError:
     from urlparse import urlparse
     from urlparse import urljoin
 
+debugme = False
 
 python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
@@ -27,68 +28,44 @@ proxies = { 'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080', }
 proxies = ''
 
 def nms_login(username, password, fqdn):
-    nms_url = 'https://' + nms_fqdn
+    nms_url = 'https://' + fqdn
+    print("We are going to now try to login to " + nms_url, end="")
     try:
         r = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         r.raise_for_status()
+        print(" Success! " + str(r))
     except requests.HTTPError as err:
         print("")
+        print("We received a simple HTTP layer 7 error code. " + str(r) )
+        print("Error code in the 400's? Probably wrong username and password. Code in the 500's means the NMS server itself is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
+    except requests.ConnectionError as err:
         print("")
+        print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
         print("")
-        print("")
-        print("Some strange HTTP level layer 7 error")
-        print("-----------------------------------------------------------------------")
-        print("")
-        print("")
-        print("The full blown raw error message is:")
-        print("")
-        print("")
-        print(r)
-        raise SystemExit(err)
-    except requests.ConnectionError:
-        print("")
-        print("")
-        print("")
-        print("")
-        print("DNS failure trying to resolve domain name \"" + nms_fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
-        print("-----------------------------------------------------------------------")
-        print("")
-        print("")
-        print("The full blown raw error message is:")
-        print("")
-        print("")
-        #print(r)
-    except requests.Timeout:
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.Timeout as err:
         # Maybe set up for a retry, or continue in a retry loop
         print("")
+        print("the FQDN resolved in DNS, but I timed out trying to connect to " +  + ", sorry. ")
         print("")
-        print("")
-        print("")
-        print("the FQDN resolved in DNS, but I timed out trying to connect to " + nms_fqdn + ", sorry. ")
-        print("-----------------------------------------------------------------------")
-        print("")
-        print("")
-        print("The full blown raw error message is:")
-        print("")
-        print("")
-        print(r)
-    except requests.TooManyRedirects:
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.TooManyRedirects as err:
         # Tell the user their URL was bad and try a different one
         print("")
-        print("")
-        print("")
-        print("")
         print("Wow, too many redirects!")
-        print("-----------------------------------------------------------------------")
         print("")
-        print("")
-        print("The full blown raw error message is:")
-        print("")
-        print("")
-        print(r)
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
     except requests.RequestException as e:
         # catastrophic error. bail.
-        print("")
         print("")
         raise SystemExit(e)
 
@@ -127,11 +104,16 @@ if __name__ == '__main__':
     parser.add_argument('--fqdn', help='Just the DNS Domain Name for the NMS instance', default='brett1.seattleis.cool')
     parser.add_argument('--username', help='The login username', default='admin')
     parser.add_argument('--password', help='The login password', default='Testenv12#')
+    parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
     args = parser.parse_args()
-    nms_fqdn = args.fqdn
+    fqdn = args.fqdn
     username = args.username
     password = args.password
     configfile = args.configfile
+    debugme = False
+    if args.debug.lower().strip() == "true":
+        debugme = True
+    
     nms_instances = {}
 
     x = os.path.isfile(configfile)
@@ -140,6 +122,12 @@ if __name__ == '__main__':
         try:
             configfile_text = open(configfile, 'r')
             nms_instances = yaml.load(configfile_text, Loader=yaml.FullLoader)
+            if debugme:
+                print ("")
+                print ("")
+                print(nms_instances)
+                print ("")
+                print ("")
         except OSError:
             print("Could not open/read file: ", configfile)
             sys.exit()
@@ -151,16 +139,15 @@ if __name__ == '__main__':
         print("")
         if x == True:
             if python_major_version == 2:
-                nms_fqdn = raw_input("Enter fqdn for the nms instance:")
+                 fqdn = raw_input("Enter fqdn for the nms instance:")
             elif python_major_version == 3:
-               nms_fqdn = input("Enter fqdn for the nms instance:")
+                fqdn = input("Enter fqdn for the nms instance:")
             else:
                 assert("You r not using Python v 2 nor 3, so it is game over.")
 
-            if not nms_fqdn:
+            if not fqdn:
                 print("You did not enter any instances, OK, then we can't continue, exiting.")
                 sys.exit()
-
 
             if python_major_version == 2:
                 username = raw_input("Enter nms username:")
@@ -174,21 +161,27 @@ if __name__ == '__main__':
             #x['stuff'].append({'h': '7', 'i': '8', 'j': '9'})
             #print(x)
 
-            # only if we want to append: nms_instances["nms_instances"].append({"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"})
+            # only if we want to append: nms_instances["nms_instances"].append({"hostname": , "username": username, "password": "noneofyourbusiness"})
             # and the following is if we want to assign, yay it works!
-            nms_instances["nms_instances"] = [{"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"}]
+            password = ""
+            nms_instances["nms_instances"] = [{"hostname": fqdn, "username": username, "password":  password}]
 
         else:
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    print(nms_instances)
-    for item in nms_instances['nms_instances']:
-        fqdn = item['hostname']
-        username = item['username']
-        #password = item['password']
-            
-        password = getpass("Enter nms user password for instance " + fqdn )
-        print(item['hostname'] + " " + item['username'] + " " + item['password'])
-
+    for single_instance in nms_instances['nms_instances']:
+        print("--------------------------------------------------------------------")
+        if debugme:
+            print("Raw instance data is: ")
+            print(single_instance)
+        fqdn = single_instance['hostname']
+        username = single_instance['username']
+        password = single_instance['password']
+        print("Now processing instance " + fqdn + " from the configuration file.")
+        if password == None or password == "":
+            password = getpass("No password found in config file, please enter password (typing hidden) :" )
+        if debugme:
+            print("Final parms going into nms_login function are: " + username + " " + password + " " + fqdn)
         nms_login(username, password, fqdn)
+
