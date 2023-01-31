@@ -72,40 +72,57 @@ if __name__ == '__main__':
     username = args.username
     password = args.password
     configfile = args.configfile
+    nms_instances = {}
 
     x = os.path.isfile(configfile)
     if x:
         print("Reading default config file nms_instance.yaml from current folder.")
+        try:
+            configfile_text = open(configfile, 'r')
+            nms_instances = yaml.load(configfile_text, Loader=yaml.FullLoader)
+        except OSError:
+            print("Could not open/read file: ", configfile)
+            sys.exit()
+        
+
     if not x:
-        print("The default config file ( nms_instances.yaml ) does not appear to exist here in the current folder.  You can retry with the --configfile parameter.")
+        print("The config file you specified ( " + configfile + " ) ( which by default is nms_instances.yaml in the current folder ) does not appear to exist. As a reminder, the --configfile parameter can be used to specify the config file.")
         x = yes_or_no("Would you like to interactively specify the parameters? ")
+        print("")
         if x == True:
             if python_major_version == 2:
                 nms_fqdn = raw_input("Enter fqdn for the nms instance:")
-                username = raw_input("Enter nms username:")
             elif python_major_version == 3:
                nms_fqdn = input("Enter fqdn for the nms instance:")
+            else:
+                assert("You r not using Python v 2 nor 3, so it is game over.")
+
+            if not nms_fqdn:
+                print("You did not enter any instances, OK, then we can't continue, exiting.")
+                sys.exit()
+
+            nms_instances["nms_instances"]"hostname"] = nms_fqdn
+
+            if python_major_version == 2:
+                username = raw_input("Enter nms username:")
+            elif python_major_version == 3:
                username = input("Enter user username:")
             else:
                 assert("You r not using Python v 2 nor 3, so it is game over.")
+
+            nms_instances["nms_instances"]["username"] = username
+
         else:
-            print("OK, then we can't continue, exiting.")
+            print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    try:
-        configfile_text = open(configfile, 'r')
-    except OSError:
-            print("Could not open/read file: ", configfile)
-            sys.exit()
-    
-    nms_instances = yaml.load(configfile_text, Loader=yaml.FullLoader)
-
+    print(nms_instances)
     for item in nms_instances['nms_instances']:
         fqdn = item['hostname']
         username = item['username']
-        password = item['password']
-        print(item['hostname'] + " " + item['username'] + " " + item['password'])
+        #password = item['password']
             
         password = getpass("Enter nms user password for instance " + fqdn )
+        print(item['hostname'] + " " + item['username'] + " " + item['password'])
 
         nms_login(username, password, fqdn)
