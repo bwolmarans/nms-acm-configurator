@@ -28,9 +28,19 @@ proxies = ''
 
 def nms_login(username, password, fqdn):
     nms_url = 'https://' + nms_fqdn
-    res = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-    res.raise_for_status()
-    print(res)
+    try:
+        res = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        res.raise_for_status()
+    except:
+        print("")
+        print("")
+        print("I couldn't connect to " + nms_fqdn + ", sorry.")
+        print("-------------------------------")
+        print("")
+        print("")
+        print("")
+        print("")
+        print(res)
 
 def waas_api_get(token, path):
     res = requests.get(urljoin(API_BASE, path), headers={"Content-Type": "application/json", 'auth-api': token}, proxies=proxies)
@@ -115,6 +125,7 @@ if __name__ == '__main__':
             #print(x)
 
             # only if we want to append: nms_instances["nms_instances"].append({"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"})
+            # and the following is if we want to assign, yay it works!
             nms_instances["nms_instances"] = [{"hostname": nms_fqdn, "username": username, "password": "noneofyourbusiness"}]
 
         else:
