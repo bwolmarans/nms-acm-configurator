@@ -26,7 +26,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 proxies = { 'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080', }
 proxies = ''
 
-def nms_login(username, password, nms_fqdn):
+def nms_login(username, password, fqdn):
     nms_url = 'https://' + nms_fqdn
     res = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     res.raise_for_status()
@@ -62,23 +62,26 @@ if __name__ == '__main__':
     configfile = args.configfile
 
     if len(sys.argv) == 1:
-        stream = open("nms_instances.yaml", 'r')
-        dictionary = yaml.load(stream, Loader=yaml.FullLoader)
-        #for key, value in dictionary.items():
-        #    print (key + " : " + str(value))
-        for instance, params in dictionary.items():
-            print ("Instance: " + instance + " Params: " + str(params) + "\n")
-            
-        if 0:
-            if python_major_version == 2:
-                nms_fqdn = raw_input("Enter fqdn for the nms instance:")
-                username = raw_input("Enter nms username:")
-            elif python_major_version == 3:
-                nms_fqdn = input("Enter fqdn for the nms instance:")
-                username = input("Enter user username:")
-            else:
-                assert("You are not using Python version 2 nor 3, so this script cannot continue.");
-        
-            password = getpass("Enter nms user password:")
 
-    nms_login(username, password, nms_fqdn)
+
+        stream = open("nms_instances.yaml", 'r')
+        nms_instances = yaml.load(stream, Loader=yaml.FullLoader)
+        for item in nms_instances['nms_instances']:
+            fqdn = item['hostname']
+            username = item['username']
+            password = item['password']
+            print(item['hostname'] + " " + item['username'] + " " + item['password'])
+            
+            if 0:
+                if python_major_version == 2:
+                    nms_fqdn = raw_input("Enter fqdn for the nms instance:")
+                    username = raw_input("Enter nms username:")
+                elif python_major_version == 3:
+                    nms_fqdn = input("Enter fqdn for the nms instance:")
+                    username = input("Enter user username:")
+                else:
+                    assert("You r not using Python v 2 nor 3, so it is game over.")
+        
+            password = getpass("Enter nms user password for instance " + fqdn )
+
+            nms_login(username, password, fqdn)
