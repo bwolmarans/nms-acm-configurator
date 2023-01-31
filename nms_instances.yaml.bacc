@@ -1,0 +1,10 @@
+---
+  nms_instances:
+    "brett1.seattleis.cool": {
+      username: admin,
+      password: Testenv12#
+    }
+    "brett5.seattleis.cool": {
+      username: admin,
+      password: Testenv12#
+    }
