@@ -1,15 +1,6 @@
 ---
   nms_instances:
-    - hostname: brett455.seattleis.cool
-      username: admin
-      password: Testenv12#
     - hostname: brett1.seattleis.cool
       username: admin
       password: Testenv12# 
-    - hostname: brett1.seattleis.cool
-      username: admin
-      password: 
-    - hostname: brett5.seattleis.cool
-      username: admin
-      password: Testenv12#
 
