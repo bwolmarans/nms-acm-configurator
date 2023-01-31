@@ -4,7 +4,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import pprint
 import sys
-import sys
+import os
 from getpass import getpass
 try:
     from urllib.parse import urlparse
@@ -42,16 +42,28 @@ def waas_api_post(token, path, mydata):
     print(res.json())
 
 
+def yes_or_no(question):
+    # Fix Python 2.x.
+    if python_major_version == 2:
+        reply = str(raw_input(question + ' (Y/n): ')).lower().strip()
+    elif python_major_version == 3:
+        reply = str(input(question + ' (Y/n): ')).lower().strip()
+    else:
+        assert("You r not using Python v 2 nor 3, so it is game over.")
 
-
-
+    if reply == '':
+        return True
+    elif reply[0] == 'y':
+        return True
+    else: 
+        return False
 
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Login to NMS')
-    parser.add_argument('--configfile', help='The config file in YAML format', default='nms_instances.yaml')
+    parser.add_argument('--configfile', help='The config file in YAML format, if this is omitted will try nms_instances.yaml in current folder.', default='nms_instances.yaml')
     parser.add_argument('--fqdn', help='Just the DNS Domain Name for the NMS instance', default='brett1.seattleis.cool')
     parser.add_argument('--username', help='The login username', default='admin')
     parser.add_argument('--password', help='The login password', default='Testenv12#')
@@ -61,27 +73,39 @@ if __name__ == '__main__':
     password = args.password
     configfile = args.configfile
 
-    if len(sys.argv) == 1:
+    x = os.path.isfile(configfile)
+    if x:
+        print("Reading default config file nms_instance.yaml from current folder.")
+    if not x:
+        print("The default config file ( nms_instances.yaml ) does not appear to exist here in the current folder.  You can retry with the --configfile parameter.")
+        x = yes_or_no("Would you like to interactively specify the parameters? ")
+        if x == True:
+            if python_major_version == 2:
+                nms_fqdn = raw_input("Enter fqdn for the nms instance:")
+                username = raw_input("Enter nms username:")
+            elif python_major_version == 3:
+               nms_fqdn = input("Enter fqdn for the nms instance:")
+               username = input("Enter user username:")
+            else:
+                assert("You r not using Python v 2 nor 3, so it is game over.")
+        else:
+            print("OK, then we can't continue, exiting.")
+            sys.exit()
 
+    try:
+        configfile_text = open(configfile, 'r')
+    except OSError:
+            print("Could not open/read file: ", configfile)
+            sys.exit()
+    
+    nms_instances = yaml.load(configfile_text, Loader=yaml.FullLoader)
 
-        stream = open("nms_instances.yaml", 'r')
-        nms_instances = yaml.load(stream, Loader=yaml.FullLoader)
-        for item in nms_instances['nms_instances']:
-            fqdn = item['hostname']
-            username = item['username']
-            password = item['password']
-            print(item['hostname'] + " " + item['username'] + " " + item['password'])
+    for item in nms_instances['nms_instances']:
+        fqdn = item['hostname']
+        username = item['username']
+        password = item['password']
+        print(item['hostname'] + " " + item['username'] + " " + item['password'])
             
-            if 0:
-                if python_major_version == 2:
-                    nms_fqdn = raw_input("Enter fqdn for the nms instance:")
-                    username = raw_input("Enter nms username:")
-                elif python_major_version == 3:
-                    nms_fqdn = input("Enter fqdn for the nms instance:")
-                    username = input("Enter user username:")
-                else:
-                    assert("You r not using Python v 2 nor 3, so it is game over.")
-        
-            password = getpass("Enter nms user password for instance " + fqdn )
+        password = getpass("Enter nms user password for instance " + fqdn )
 
-            nms_login(username, password, fqdn)
+        nms_login(username, password, fqdn)
