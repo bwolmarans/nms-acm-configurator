@@ -245,7 +245,6 @@ if __name__ == '__main__':
         if somestuff == None:
             continue
         somestuff = somestuff.text
-        print("Workspace:")
         jl = json.loads(somestuff)
         wslinks = jl["_links"]
         #print(workspaces[1])
@@ -254,9 +253,10 @@ if __name__ == '__main__':
             wspath = ws["href"]
             #print(wspath)
             workspace = urlparse(wspath).path.split("/")[-1]
-            print("    " + workspace)
+            print("Workspace:")
+            print("  " + workspace)
             somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
-            print("    The environments are:")
+            print("    environments:")
             somestuff = somestuff.text
             jl = json.loads(somestuff)
             enitems = jl["items"]
@@ -267,6 +267,6 @@ if __name__ == '__main__':
                 for en in enlinks:
                     enpath = en["href"]
                     environment = urlparse(enpath).path.split("/")[-1]
-                    print("        " + environment)
+                    print("      " + environment)
                 
 
