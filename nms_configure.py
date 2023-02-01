@@ -223,8 +223,11 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
+    were_outta_here = False
     for single_instance in nms_instances['nms_instances']:
-        print("-------****-----------------------")
+        if were_outta_here:
+            continue
+        print("---****---***---***---***---***---***---***---")
         if debugme:
             print("Raw instance data is: ")
             print(single_instance)
@@ -239,6 +242,7 @@ if __name__ == '__main__':
         if args.fqdn is not None:
             fqdn = args.fqdn
             print("Overriding config file fqdn with the one from the command line")
+            were_outta_here = True
         if args.username is not None:
             username = args.username
             print("Overriding config file username with the one  from the command line")
@@ -283,8 +287,4 @@ if __name__ == '__main__':
                     obcmd = px["onboardingCommands"]
                     pxclustername = px["proxyClusterName"]
                     print("           " + hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
-        if args.fqdn is not None:
-            break
-                
-                
 
