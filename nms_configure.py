@@ -48,7 +48,7 @@ def nms_login(username, password, fqdn):
     nms_url = 'https://' + fqdn
     print("We are going to now try to login to " + nms_url, end="")
     try:
-        r = requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = excellent_requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         r.raise_for_status()
         print(" Success! " + str(r))
     except requests.HTTPError as err:
@@ -201,14 +201,29 @@ if __name__ == '__main__':
         if debugme:
             print("Final parms going into nms_login function are: " + username + " " + password + " " + fqdn)
         #nms_login(username, password, fqdn)
-        x = getstuff(username, password, fqdn, "/infrastructure/workspaces")
+        somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
         print("The workspaces are:")
-        y = json.loads(x)
-        z = y["_links"]
-        #print(z[1])
-        #print(z[1]["href"])
-        for key in z:
-            value = key["href"]
-            print(value)
-        
+        jl = json.loads(somestuff)
+        wslinks = jl["_links"]
+        #print(workspaces[1])
+        #print(workspaces[1]["href"])
+        for ws in wslinks:
+            wspath = ws["href"]
+            #print(wspath)
+            #get the name as the final thingy in the url
+            workspace = urlparse(wspath).path.split("/")[-1]
+            print(workspace)
+            somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
+            print("The environments are:")
+            jl = json.loads(somestuff)
+            enitems = jl["items"]
+            #we have to loop through these items
+            for enitem in enitems:
+                #print(enitem)
+                enlinks = enitem["_links"]
+                for en in enlinks:
+                    enpath = en["href"]
+                    environment = urlparse(enpath).path.split("/")[-1]
+                    print(environment)
+                
 
