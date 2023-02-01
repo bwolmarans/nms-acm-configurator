@@ -157,14 +157,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Login to NMS')
     parser.add_argument('--configfile', help='The config file in YAML format, if this is omitted will try nms_instances.yaml in current folder.', default='nms_instances.yaml')
-    parser.add_argument('--fqdn', help='Just the DNS Domain Name for the NMS instance', default='brett1.seattleis.cool')
-    parser.add_argument('--username', help='The login username', default='admin')
-    parser.add_argument('--password', help='The login password', default='Testenv12#')
+    parser.add_argument('--fqdn', help='Just the DNS Domain Name for the NMS instance, and this will override the DNS name in the config file.', default=None)
+    parser.add_argument('--username', help='The login username.  If specified, this will over-ride the username in the config file.', default=None)
+    parser.add_argument('--password', help='The login password.  Overrides the config file password.', default=None)
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
     args = parser.parse_args()
-    fqdn = args.fqdn
-    username = args.username
-    password = args.password
     configfile = args.configfile
     debugme = False
     if args.debug.lower().strip() == "true":
@@ -237,10 +234,19 @@ if __name__ == '__main__':
         print("Now processing instance " + fqdn + " from the configuration file.")
         if password == None or password == "":
             password = getpass("No password found in config file, please enter password (typing hidden) :" )
-        if debugme:
-            print("Final parms going into nms_login function are: " + username + " " + password + " " + fqdn)
         # The login is not even needed.  I need to figure out all the error handling if I don't do this first, for dns errors and so forth.
         # nms_login(username, password, fqdn)
+        if args.fqdn is not None:
+            fqdn = args.fqdn
+            print("Overriding config file fqdn with the one from the command line")
+        if args.username is not None:
+            username = args.username
+            print("Overriding config file username with the one  from the command line")
+        if args.password is not None:
+            password = args.password
+            print("Overriding config file password with the one from the command line")
+        if 1:
+            print("Parameters are: " + username + " " + password + " " + fqdn)
         somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
         if somestuff == None:
             continue
@@ -277,6 +283,8 @@ if __name__ == '__main__':
                     obcmd = px["onboardingCommands"]
                     pxclustername = px["proxyClusterName"]
                     print("           " + hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+        if args.fqdn is not None:
+            break
                 
                 
 
