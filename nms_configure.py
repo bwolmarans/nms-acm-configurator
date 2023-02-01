@@ -29,6 +29,9 @@ debugme = False
 python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
+def super_http_get(url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, proxies=None, stream=False, timeout=None, verify=True):
+    r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+    return r
 
 def getstuff(username, password, fqdn, path):
     #/infrastructure/workspaces
@@ -36,13 +39,14 @@ def getstuff(username, password, fqdn, path):
     if debugme:
         print("We are going to now try to get stuff from " + nms_url, end="")
     try:
-        r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = super_http_get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         r.raise_for_status()
         if debugme:
             print(" Success! " + str(r))
-    except:
-        print(r)
-    return(r.text)
+        return(r.text)
+    except requests.ConnectionError as err:
+        print(err)
 
 def nms_login(username, password, fqdn):
     nms_url = 'https://' + fqdn
@@ -200,7 +204,8 @@ if __name__ == '__main__':
             password = getpass("No password found in config file, please enter password (typing hidden) :" )
         if debugme:
             print("Final parms going into nms_login function are: " + username + " " + password + " " + fqdn)
-        #nms_login(username, password, fqdn)
+        # The login is not even needed.  I need to figure out all the error handling if I don't do this first, for dns errors and so forth.
+        # nms_login(username, password, fqdn)
         somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
         print("The workspaces are:")
         jl = json.loads(somestuff)
@@ -210,7 +215,6 @@ if __name__ == '__main__':
         for ws in wslinks:
             wspath = ws["href"]
             #print(wspath)
-            #get the name as the final thingy in the url
             workspace = urlparse(wspath).path.split("/")[-1]
             print(workspace)
             somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
