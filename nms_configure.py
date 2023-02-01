@@ -29,7 +29,7 @@ debugme = False
 python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
-def super_http_get(url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, proxies=None, stream=False, timeout=None, verify=True):
+def super_get(url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, proxies=None, stream=False, timeout=None, verify=True):
     try:
         r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
         r.raise_for_status()
@@ -75,7 +75,7 @@ def getstuff(username, password, fqdn, path):
     if debugme:
         print("We are going to now try to get stuff from " + nms_url, end="")
     try:
-        r = super_http_get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = super_get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         if debugme:
             print(" Success! " + str(r))
@@ -268,5 +268,15 @@ if __name__ == '__main__':
                     enpath = en["href"]
                     environment = urlparse(enpath).path.split("/")[-1]
                     print("      " + environment)
+                nginx_proxies = enitem["proxies"]
+                print("         API Gateways:")
+                for px in nginx_proxies:
+                    hostname = px["hostnames"]
+                    port = px["listeners"][0]["port"]
+                    prot = px["listeners"][0]["transportProtocol"]                    
+                    obcmd = px["onboardingCommands"]
+                    pxclustername = px["proxyClusterName"]
+                    print("           " + hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+                
                 
 
