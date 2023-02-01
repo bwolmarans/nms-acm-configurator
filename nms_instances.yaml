@@ -1,6 +1,12 @@
 ---
   nms_instances:
+    - hostname: iibrett1.seattleis.cool
+      username: admin
+      password: Testenv12# 
     - hostname: brett1.seattleis.cool
+      username: admin
+      password: Testenv12# 
+    - hostname: xxxbrett1.seattleis.cool
       username: admin
       password: Testenv12# 
 

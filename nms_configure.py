@@ -30,21 +30,56 @@ python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
 def super_http_get(url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, proxies=None, stream=False, timeout=None, verify=True):
-    r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
-    return r
+    try:
+        r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+        r.raise_for_status()
+        if debugme:
+            print(" Success! " + str(r))
+        return r
+    except requests.HTTPError as err:
+        print("")
+        print("We received a simple HTTP layer 7 error code. " + str(r) )
+        print("Error code in the 400's? Probably wrong username and password. Code in the 500's means the NMS server itself is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
+    except requests.ConnectionError as err:
+        print("")
+        print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
+        print("")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.Timeout as err:
+        # Maybe set up for a retry, or continue in a retry loop
+        print("")
+        print("the FQDN resolved in DNS, but I timed out trying to connect to " +  + ", sorry. ")
+        print("")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.TooManyRedirects as err:
+        # Tell the user their URL was bad and try a different one
+        print("")
+        print("Wow, too many redirects!")
+        print("")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.RequestException as e:
+        # catastrophic error. bail.
+        print("")
 
 def getstuff(username, password, fqdn, path):
-    #/infrastructure/workspaces
     nms_url = 'https://' + fqdn
     if debugme:
         print("We are going to now try to get stuff from " + nms_url, end="")
     try:
         r = super_http_get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        r.raise_for_status()
         if debugme:
             print(" Success! " + str(r))
-        return(r.text)
+        return r
     except requests.ConnectionError as err:
         print(err)
 
@@ -192,7 +227,7 @@ if __name__ == '__main__':
             sys.exit()
 
     for single_instance in nms_instances['nms_instances']:
-        print("--------------------------------------------------------------------")
+        print("-------****-----------------------")
         if debugme:
             print("Raw instance data is: ")
             print(single_instance)
@@ -207,7 +242,10 @@ if __name__ == '__main__':
         # The login is not even needed.  I need to figure out all the error handling if I don't do this first, for dns errors and so forth.
         # nms_login(username, password, fqdn)
         somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
-        print("The workspaces are:")
+        if somestuff == None:
+            continue
+        somestuff = somestuff.text
+        print("Workspace:")
         jl = json.loads(somestuff)
         wslinks = jl["_links"]
         #print(workspaces[1])
@@ -216,9 +254,10 @@ if __name__ == '__main__':
             wspath = ws["href"]
             #print(wspath)
             workspace = urlparse(wspath).path.split("/")[-1]
-            print(workspace)
+            print("    " + workspace)
             somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
-            print("The environments are:")
+            print("    The environments are:")
+            somestuff = somestuff.text
             jl = json.loads(somestuff)
             enitems = jl["items"]
             #we have to loop through these items
@@ -228,6 +267,6 @@ if __name__ == '__main__':
                 for en in enlinks:
                     enpath = en["href"]
                     environment = urlparse(enpath).path.split("/")[-1]
-                    print(environment)
+                    print("        " + environment)
                 
 
