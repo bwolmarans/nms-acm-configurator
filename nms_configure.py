@@ -153,8 +153,8 @@ def yes_or_no(question):
 
 
 
-if __name__ == '__main__':
 
+def read_config_walp():
     parser = argparse.ArgumentParser(description='Login to NMS')
     parser.add_argument('--configfile', help='The config file in YAML format, if this is omitted will try nms_instances.yaml in current folder.', default='nms_instances.yaml')
     parser.add_argument('--fqdn', help='Just the DNS Domain Name for the NMS instance, and this will override the DNS name in the config file.', default=None)
@@ -251,21 +251,27 @@ if __name__ == '__main__':
             print("Overriding config file password with the one from the command line")
         if 1:
             print("Parameters are: " + username + " " + password + " " + fqdn)
-        somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
-        if somestuff == None:
+        try:
+            somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
+            if somestuff == None:
+                continue
+            somestuff = somestuff.text
+            jl = json.loads(somestuff)
+            wslinks = jl["_links"]
+            #print(workspaces[1])
+            #print(workspaces[1]["href"])
+        except:
             continue
-        somestuff = somestuff.text
-        jl = json.loads(somestuff)
-        wslinks = jl["_links"]
-        #print(workspaces[1])
-        #print(workspaces[1]["href"])
         for ws in wslinks:
             wspath = ws["href"]
             #print(wspath)
             workspace = urlparse(wspath).path.split("/")[-1]
             print("Workspace:")
             print("  " + workspace)
-            somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
+            try:
+                somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
+            except:
+                print("woos")
             print("    environments:")
             somestuff = somestuff.text
             jl = json.loads(somestuff)
@@ -287,4 +293,8 @@ if __name__ == '__main__':
                     obcmd = px["onboardingCommands"]
                     pxclustername = px["proxyClusterName"]
                     print("           " + hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+
+
+if __name__ == '__main__':
+    read_config_walp()
 
