@@ -38,17 +38,24 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
                 print(" Success! " + str(r))
             return r
         if verb == "POST":
-#curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
-            headers = {"Content-Type": "application/json", "Accept": "application/json"}
-            r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            if headers == None:
+                headers = {"Content-Type": "application/json", "Accept": "application/json"}
+            if debugme:
+                print("Here in super_req we are about to POST with:")
+                print("Headers: " + str(headers))
+                print("Data: " + data)
+            r = requests.post(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
             r.raise_for_status()
             if debugme:
-                print(" Success! " + str(r))
+                print(" Success! " + str(r.content))
             return r
     except requests.HTTPError as err:
         print("")
-        print("We received a simple HTTP layer 7 error code. " + str(r) )
-        print("Error code in the 400's? Probably wrong username and password. Code in the 500's means the NMS server itself is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
+        print("We received a HTTP layer 7 error code. " + str(r) )
+        print("400 = bad url or parameter, 401 = wrong username or password or token, 500's means something wrong on the server or app.")
+        print("")
+        print("Here is the whole error message: ")
+        print(str(r.content))
     except requests.ConnectionError as err:
         print("")
         print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
@@ -92,19 +99,6 @@ def getstuff(username, password, fqdn, path):
     except requests.ConnectionError as err:
         print(err)
 
-def poststuff(username, password, fqdn, path, data):
-    nms_url = 'https://' + fqdn
-    if debugme:
-        print("We are going to now try to POST some stuff to " + nms_url, end="")
-    try:
-        r = super_req("POST", urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-        #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        if debugme:
-            print(" Success! " + str(r))
-        return r
-    except requests.ConnectionError as err:
-        print(err)
-
 def nms_login(username, password, fqdn):
     nms_url = 'https://' + fqdn
     print("We are going to now try to login to " + nms_url, end="")
@@ -115,7 +109,7 @@ def nms_login(username, password, fqdn):
     except requests.HTTPError as err:
         print("")
         print("We received a simple HTTP layer 7 error code. " + str(r) )
-        print("Error code in the 400's? Probably wrong username and password. Code in the 500's means the NMS server itself is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
+        print("Error code in the 400's? Wrong username or password. Code in the 500's = the NMS server is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
     except requests.ConnectionError as err:
         print("")
         print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
@@ -173,7 +167,7 @@ def yes_or_no(question):
     else: 
         return False
 
-def read_config_walp():
+def read_all_config():
     were_outta_here = False
     for single_instance in nms_instances['nms_instances']:
         if were_outta_here:
@@ -250,20 +244,30 @@ def read_config_walp():
 
 
 
-def acm_post():
+def acm_post(workspace):
     #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
     username = "admin"
     password = "Testenv12#"
     fqdn = "brett4.seattleis.cool"
     try:
-        somestuff = poststuff(username, password, fqdn, "/infrastructure/workspaces", '{"name": "workspace3","metadata": {"description": "App Development Workspace"}}')
+        somestuff = poststuff(username, password, fqdn, "/infrastructure/workspaces", data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}')
     except:
         print("wooopss")
         print(somestuff)
 
 
-
-
+def poststuff(username, password, fqdn, path, data):
+    nms_url = 'https://' + fqdn
+    url = urljoin(nms_url, acm_api_prefix + path)
+    if debugme:
+        print("We are going to POST some stuff to " + url)
+    try:
+        r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+        if debugme:
+            print(" Success! " + str(r))
+        return r
+    except requests.ConnectionError as err:
+        print(err)
 
 
 
@@ -311,7 +315,7 @@ if __name__ == '__main__':
 
 
     if not x:
-        print("The config file you specified ( " + configfile + " ) ( which by default is nms_instances.yaml in the current folder ) does not appear to exist. As a reminder, the --configfile parameter can be used to specify the config file.")
+        print("The config file you specified ( " + configfile + " ) (default is nms_instances.yaml in current folder) does not seem to exist. The --configfile parameter can specify the config file.")
         x = yes_or_no("Would you like to interactively specify the parameters? ")
         print("")
         if x == True:
@@ -347,6 +351,7 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    read_config_walp()
-    acm_post()
+    acm_post('workspace3')
+    acm_post('workspace4')
+    read_all_config()
 
