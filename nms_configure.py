@@ -59,6 +59,10 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             r.raise_for_status()
             return r
 
+    except requests.HTTPError as err:
+        print("")
+        print("HTTP layer 7 error: " + str(r) + " " + str(r.content))
+
     except requests.exceptions.RequestException as e:
         print("error: " + str(e))
 
@@ -147,7 +151,6 @@ def read_all_config():
             somestuff = somestuff.text
             jl = json.loads(somestuff)
             enitems = jl["items"]
-            #we have to loop through these items
             for enitem in enitems:
                 #print(enitem)
                 enlinks = enitem["_links"]
@@ -167,19 +170,12 @@ def read_all_config():
 
 
 
-
-
-
 def acm_post(workspace):
     #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
     username = "admin"
     password = "Testenv12#"
     hostname = "brett4.seattleis.cool"
-    try:
-        somestuff = poststuff(username, password, hostname, "/infrastructure/workspaces", data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}')
-    except:
-        print("wooopss")
-        print(somestuff)
+    somestuff = poststuff(username, password, hostname, "/infrastructure/workspaces", data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}')
 
 
 def poststuff(username, password, hostname, path, data):
@@ -187,13 +183,8 @@ def poststuff(username, password, hostname, path, data):
     url = urljoin(nms_url, acm_api_prefix + path)
     if debugme:
         print("We are going to POST some stuff to " + url)
-    try:
-        r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-        if debugme:
-            print(" Success! " + str(r))
-        return r
-    except requests.ConnectionError as err:
-        print(err)
+    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    return r
 
 def sitecheck(fqdn):
     status = None
@@ -306,7 +297,7 @@ if __name__ == '__main__':
             config_dict["nms_instances"][i]["password"] = args.password
         #print(sitecheck(config_dict["nms_instances"][i]["hostname"]))
 
-    #acm_post('iworkspace1')
+    acm_post('iworkspace1')
     #acm_post('workspace2')
     #acm_post('workspace3')
     read_all_config()
