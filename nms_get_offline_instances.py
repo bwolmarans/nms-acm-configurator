@@ -54,6 +54,7 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             if debugme:
                 print("Here in super_req we are about to DELETE :" + url)
             r = requests.delete(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            r.raise_for_status()
             if debugme:
                 print(" Success! " + str(r.content))
             
@@ -67,8 +68,9 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         #print(str(r.content))
     except requests.ConnectionError as err:
         print("")
-        print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
+        print("DNS failure resolving \"" + url + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
         print("")
+        raise ValueError("There is no jam. Sad bread.")
         if debugme:
             print("OK you asked for it, the full blown raw error message is:")
             print("")
@@ -94,71 +96,6 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
     except requests.RequestException as e:
         # catastrophic error. bail.
         print("")
-
-def getstuff(username, password, fqdn, path):
-    the_url = 'https://' + fqdn
-    if debugme:
-        print("We are going to now try to get stuff from " + the_url, end="")
-    try:
-        r = super_req("GET", urljoin(the_url, path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        #r = requests.get(urljoin(the_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        if debugme:
-            print(" Success! " + str(r))
-        return r
-    except requests.ConnectionError as err:
-        print(err)
-
-def nms_login(username, password, fqdn):
-    the_url = 'https://' + fqdn
-    print("We are going to now try to login to " + the_url, end="")
-    try:
-        r = excellent_requests.get(urljoin(the_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        r.raise_for_status()
-        print(" Success! " + str(r))
-    except requests.HTTPError as err:
-        print("")
-        print("We received a simple HTTP layer 7 error code. " + str(r) )
-        print("Error code in the 400's? Wrong username or password. Code in the 500's = the NMS server is having problems, or maybe some proxy or other Layer 7 device between you and the NMS server is having problems.")
-    except requests.ConnectionError as err:
-        print("")
-        print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
-        print("")
-        if debugme:
-            print("OK you asked for it, the full blown raw error message is:")
-            print("")
-            print(err)
-    except requests.Timeout as err:
-        # Maybe set up for a retry, or continue in a retry loop
-        print("")
-        print("the FQDN resolved in DNS, but I timed out trying to connect to " +  + ", sorry. ")
-        print("")
-        if debugme:
-            print("OK you asked for it, the full blown raw error message is:")
-            print("")
-            print(err)
-    except requests.TooManyRedirects as err:
-        # Tell the user their URL was bad and try a different one
-        print("")
-        print("Wow, too many redirects!")
-        print("")
-        if debugme:
-            print("OK you asked for it, the full blown raw error message is:")
-            print("")
-            print(err)
-    except requests.RequestException as e:
-        # catastrophic error. bail.
-        print("")
-        raise SystemExit(e)
-
-def waas_api_get(token, path):
-    res = requests.get(urljoin(API_BASE, path), headers={"Content-Type": "application/json", 'auth-api': token}, proxies=proxies)
-    res.raise_for_status()
-    return res.json()
-
-def waas_api_post(token, path, mydata):
-    res = requests.post(urljoin(API_BASE, path), headers={"Content-Type": "application/json", "Accept": "application/json",'auth-api': token}, data=mydata, proxies=proxies)
-    print(res.json())
-
 
 def yes_or_no(question):
     # Fix Python 2.x.
@@ -176,29 +113,34 @@ def yes_or_no(question):
     else: 
         return False
 
+def get_end(mypath, item = -1):
+    return urlparse(mypath).path.split("/")[item]
+
 def delete_the_offline_instances():
-    urlpath = nms_api_prefix + "/systems"
+    fqdn = "XXX707ef7cf-7d17-42c7-9588-07f1cf61266b.access.udf.f5.com"
+    url = "https://" + fqdn + "/" + nms_api_prefix + "/systems"
     username = "admin"
     password = 'NIM123!@#'
     fqdn = '707ef7cf-7d17-42c7-9588-07f1cf61266b.access.udf.f5.com'
-    somestuff = getstuff(username, password, fqdn, urlpath)
-    somestuff = somestuff.text
-    jl = json.loads(somestuff)
+    try:
+        r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    except:
+        print("We can't continue.")
+        exit()
+    t = r.text
+    jl = json.loads(t)
     #print(json.dumps(jl, indent=2))
     agent_systems = jl["items"]
     for agent_sys in agent_systems:
         ds = agent_sys["displayName"]
         print(ds)
-        ssss = agent_sys["links"]
-        suid = ssss[0]["rel"]
-        suid = urlparse(suid).path.split("/")[-1]
-        nginx_instances = agent_sys["nginxInstances"]
-        #we have to loop through these items
-        for nginx_instance in nginx_instances:
-            dn = nginx_instance["displayName"]
+        suid = get_end(agent_sys["links"][0]["rel"])
+        nginx_is = agent_sys["nginxInstances"]
+        for nginx_i in nginx_is:
+            dn = nginx_i["displayName"]
             print("\t" + dn)
-            nuid = nginx_instance["uid"]
-            st = nginx_instance["status"]
+            nuid = nginx_i["uid"]
+            st = nginx_i["status"]
             s = st["state"]
             print("\t\t" + s)
             print("")
@@ -207,40 +149,12 @@ def delete_the_offline_instances():
                 path = "/systems/" + suid + "/instances/" + nuid 
                 url = urljoin(the_url, nms_api_prefix + path)
                 print("We are going to DELETE " + url)
-                r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-                print(str(r))
-            
-            
-
-
-
-def acm_post(workspace):
-    #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
-    username = "admin"
-    password = "Testenv12#"
-    fqdn = "brett4.seattleis.cool"
-    try:
-        somestuff = poststuff(username, password, fqdn, "/infrastructure/workspaces", data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}')
-    except:
-        print("wooopss")
-        print(somestuff)
-
-
-def poststuff(username, password, fqdn, path, data):
-    the_url = 'https://' + fqdn
-    url = urljoin(the_url, acm_api_prefix + path)
-    if debugme:
-        print("We are going to POST some stuff to " + url)
-    try:
-        r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-        if debugme:
-            print(" Success! " + str(r))
-        return r
-    except requests.ConnectionError as err:
-        print(err)
-
-
-
+                try:
+                    r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+                    print(str(r))
+                except:
+                    print("failed")
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Login to NMS', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--configfile', help='''
