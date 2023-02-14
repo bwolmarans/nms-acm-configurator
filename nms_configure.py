@@ -66,13 +66,83 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
     except requests.exceptions.RequestException as e:
         print("error: " + str(e))
 
+def sssuper_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
+    try:
+        if verb == "GET":
+            r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            r.raise_for_status()
+            if debugme:
+                print(" Success! " + str(r))
+            return r
+        if verb == "POST":
+            if headers == None:
+                headers = {"Content-Type": "application/json", "Accept": "application/json"}
+            if debugme:
+                print("Here in super_req we are about to POST with:")
+                print("Headers: " + str(headers))
+                print("Data: " + data)
+            r = requests.post(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            r.raise_for_status()
+            if debugme:
+                print(" Success! " + str(r.content))
+            return r
+        if verb == "DELETE":
+            if debugme:
+                print("Here in super_req we are about to DELETE :" + url)
+            r = requests.delete(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            r.raise_for_status()
+            if debugme:
+                print(" Success! " + str(r.content))
+
+    except requests.HTTPError as err:
+        print("")
+        print("HTTP layer 7 error code: " + str(r) + " " + str(r.content))
+        #print("We received a HTTP layer 7 error code. " + str(r) )
+        #print("400 = bad url or parameter, 401 = wrong username or password or token, 500's means something wrong on the server or app.")
+        #print("")
+        #print("Here is the whole error message: ")
+        #print(str(r.content))
+    except requests.ConnectionError as err:
+        print("")
+        print("DNS failure resolving \"" + url + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
+        print("")
+        #raise ValueError("There is no jam. Sad bread.")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.Timeout as err:
+        # Maybe set up for a retry, or continue in a retry loop
+        print("")
+        print("the FQDN resolved in DNS, but I timed out trying to connect to " +  + ", sorry. ")
+        print("")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.TooManyRedirects as err:
+        # Tell the user their URL was bad and try a different one
+        print("")
+        print("Wow, too many redirects!")
+        print("")
+        if debugme:
+            print("OK you asked for it, the full blown raw error message is:")
+            print("")
+            print(err)
+    except requests.RequestException as e:
+        # catastrophic error. bail.
+        print("")
 
 def getstuff(username, password, hostname, path):
     nms_url = 'https://' + hostname + "/" + acm_api_prefix + path
     if debugme:
         print("We now try to get stuff from " + nms_url)
-    r = super_req("GET", nms_url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-    return r
+    try:
+        r = sssuper_req("GET", nms_url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        return r
+    except:
+        return None
+
 
 def nms_login(username, password, hostname):
     nms_url = 'https://' + hostname + "/" + nms_api_prefix + "/license"
