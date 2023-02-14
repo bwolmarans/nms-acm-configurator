@@ -32,15 +32,19 @@ python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
 def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
-    #r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
-    #r.raise_for_status()
-#    try:
-#    except requests.ConnectionError as err:
-#        print("DNS Failed")
-#        print("DNS Failed")
-#        print("DNS Failed")
-#        print("DNS Failed")
-#        exit()
+
+    if headers == None:
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+
+    if debugme:
+        print("")
+        print("super_req debug info")
+        print("--------------------")
+        print("Verb: " + verb)
+        print("Headers: " + str(headers))
+        print("URL: " + url)
+        print("Parameters: " + str(params))
+        print("Data: " + str(data))
     
     try:
         if verb == "GET":
@@ -50,12 +54,6 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             return r
 
         if verb == "POST":
-            if headers == None:
-                headers = {"Content-Type": "application/json", "Accept": "application/json"}
-            if debugme:
-                print("Here in super_req we are about to POST with:")
-                print("Headers: " + str(headers))
-                print("Data: " + data)
             r = requests.post(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
             r.raise_for_status()
@@ -139,10 +137,6 @@ def read_all_config():
             wspath = ws["href"]
             #print(wspath)
             workspace = urlparse(wspath).path.split("/")[-1]
-            print("-------------------")
-            print(hostname)
-            print("-------------------")
-
             print("Workspace:")
             print("  " + workspace)
             try:
