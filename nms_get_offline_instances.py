@@ -50,6 +50,13 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             if debugme:
                 print(" Success! " + str(r.content))
             return r
+        if verb == "DELETE":
+            if debugme:
+                print("Here in super_req we are about to DELETE :" + url)
+            r = requests.delete(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            if debugme:
+                print(" Success! " + str(r.content))
+            
     except requests.HTTPError as err:
         print("")
         print("HTTP layer 7 error code: " + str(r) + " " + str(r.content))
@@ -89,13 +96,12 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         print("")
 
 def getstuff(username, password, fqdn, path):
-    print("hello")
-    nms_url = 'https://' + fqdn
+    the_url = 'https://' + fqdn
     if debugme:
-        print("We are going to now try to get stuff from " + nms_url, end="")
+        print("We are going to now try to get stuff from " + the_url, end="")
     try:
-        r = super_req("GET", urljoin(nms_url, path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = super_req("GET", urljoin(the_url, path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        #r = requests.get(urljoin(the_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         if debugme:
             print(" Success! " + str(r))
         return r
@@ -103,10 +109,10 @@ def getstuff(username, password, fqdn, path):
         print(err)
 
 def nms_login(username, password, fqdn):
-    nms_url = 'https://' + fqdn
-    print("We are going to now try to login to " + nms_url, end="")
+    the_url = 'https://' + fqdn
+    print("We are going to now try to login to " + the_url, end="")
     try:
-        r = excellent_requests.get(urljoin(nms_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = excellent_requests.get(urljoin(the_url, 'login'), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         r.raise_for_status()
         print(" Success! " + str(r))
     except requests.HTTPError as err:
@@ -170,7 +176,7 @@ def yes_or_no(question):
     else: 
         return False
 
-def read_all_config():
+def delete_the_offline_instances():
     urlpath = nms_api_prefix + "/systems"
     username = "admin"
     password = 'NIM123!@#'
@@ -183,17 +189,27 @@ def read_all_config():
     for agent_sys in agent_systems:
         ds = agent_sys["displayName"]
         print(ds)
+        ssss = agent_sys["links"]
+        suid = ssss[0]["rel"]
+        suid = urlparse(suid).path.split("/")[-1]
         nginx_instances = agent_sys["nginxInstances"]
         #we have to loop through these items
         for nginx_instance in nginx_instances:
             dn = nginx_instance["displayName"]
             print("\t" + dn)
+            nuid = nginx_instance["uid"]
             st = nginx_instance["status"]
             s = st["state"]
             print("\t\t" + s)
             print("")
+            if s == "offline":
+                the_url = 'https://' + fqdn
+                path = "/systems/" + suid + "/instances/" + nuid 
+                url = urljoin(the_url, nms_api_prefix + path)
+                print("We are going to DELETE " + url)
+                r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+                print(str(r))
             
-
             
 
 
@@ -211,8 +227,8 @@ def acm_post(workspace):
 
 
 def poststuff(username, password, fqdn, path, data):
-    nms_url = 'https://' + fqdn
-    url = urljoin(nms_url, acm_api_prefix + path)
+    the_url = 'https://' + fqdn
+    url = urljoin(the_url, acm_api_prefix + path)
     if debugme:
         print("We are going to POST some stuff to " + url)
     try:
@@ -305,5 +321,5 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    read_all_config()
+    delete_the_offline_instances()
 
