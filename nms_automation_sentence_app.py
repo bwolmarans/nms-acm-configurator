@@ -51,12 +51,11 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             return r
     except requests.HTTPError as err:
         print("")
-        print("HTTP layer 7 error code: " + str(r) + " " + str(r.content))
-        #print("We received a HTTP layer 7 error code. " + str(r) )
-        #print("400 = bad url or parameter, 401 = wrong username or password or token, 500's means something wrong on the server or app.")
-        #print("")
-        #print("Here is the whole error message: ")
-        #print(str(r.content))
+        print("We received a HTTP layer 7 error code. " + str(r) )
+        print("400 = bad url or parameter, 401 = wrong username or password or token, 500's means something wrong on the server or app.")
+        print("")
+        print("Here is the whole error message: ")
+        print(str(r.content))
     except requests.ConnectionError as err:
         print("")
         print("DNS failure resolving \"" + fqdn + "\" or I couldn't connect to the socket, not really sure which one, but either way it's game over, sorry.")
@@ -352,8 +351,7 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    acm_post('iworkspace1')
-    acm_post('workspace2')
     acm_post('workspace3')
+    acm_post('workspace4')
     read_all_config()
 
