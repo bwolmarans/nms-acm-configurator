@@ -170,17 +170,17 @@ def yes_or_no(question):
 
 def read_all_config():
     were_outta_here = False
-    for single_nms_instance in nms_instances['nms_instances']:
+    for single_instance in nms_instances['nms_instances']:
         if were_outta_here:
             continue
         print("---****---***---***---***---***---***---***---")
         if debugme:
-            print("Raw nms_instance data is: ")
-            print(single_nms_instance)
-        fqdn = single_nms_instance['hostname']
-        username = single_nms_instance['username']
-        password = single_nms_instance['password']
-        print("Now processing nms_instance " + fqdn + " from the configuration file.")
+            print("Raw instance data is: ")
+            print(single_instance)
+        fqdn = single_instance['hostname']
+        username = single_instance['username']
+        password = single_instance['password']
+        print("Now processing instance " + fqdn + " from the configuration file.")
         if password == None or password == "":
             password = getpass("No password found in config file, please enter password (typing hidden) :" )
         # The login is not even needed.  I need to figure out all the error handling if I don't do this first, for dns errors and so forth.
@@ -286,7 +286,7 @@ if __name__ == '__main__':
         username: admin
         password: Testenv12#
     ''', default='nms_instances.yaml')
-    parser.add_argument('--fqdn', help='The Dommain Name for NMS nms_instance, and this will override the DNS name in the config file.', default=None)
+    parser.add_argument('--fqdn', help='The Dommain Name for NMS instance, and this will override the DNS name in the config file.', default=None)
     parser.add_argument('--username', help='The login username.  If specified, this will over-ride the username in the config file.', default=None)
     parser.add_argument('--password', help='The login password.  Overrides the config file password.', default=None)
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
@@ -321,14 +321,14 @@ if __name__ == '__main__':
         print("")
         if x == True:
             if python_major_version == 2:
-                 fqdn = raw_input("Enter fqdn for the nms nms_instance:")
+                 fqdn = raw_input("Enter fqdn for the nms instance:")
             elif python_major_version == 3:
-                fqdn = input("Enter fqdn for the nms nms_instance:")
+                fqdn = input("Enter fqdn for the nms instance:")
             else:
                 assert("You r not using Python v 2 nor 3, so it is game over.")
 
             if not fqdn:
-                print("You did not enter any nms_instances, OK, then we can't continue, exiting.")
+                print("You did not enter any instances, OK, then we can't continue, exiting.")
                 sys.exit()
 
             if python_major_version == 2:
