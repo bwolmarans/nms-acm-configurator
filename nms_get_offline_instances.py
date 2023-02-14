@@ -23,6 +23,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 # GLOBALS
 acm_api_prefix = "api/acm/v1"
+nms_api_prefix = "api/platform/v1"
 proxies = { 'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080', }
 proxies = ''
 debugme = False
@@ -88,11 +89,12 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         print("")
 
 def getstuff(username, password, fqdn, path):
+    print("hello")
     nms_url = 'https://' + fqdn
     if debugme:
         print("We are going to now try to get stuff from " + nms_url, end="")
     try:
-        r = super_req("GET", urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = super_req("GET", urljoin(nms_url, path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         #r = requests.get(urljoin(nms_url, acm_api_prefix + path), auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         if debugme:
             print(" Success! " + str(r))
@@ -169,79 +171,30 @@ def yes_or_no(question):
         return False
 
 def read_all_config():
-    were_outta_here = False
-    for single_instance in nms_instances['nms_instances']:
-        if were_outta_here:
-            continue
-        print("---****---***---***---***---***---***---***---")
-        if debugme:
-            print("Raw instance data is: ")
-            print(single_instance)
-        fqdn = single_instance['hostname']
-        username = single_instance['username']
-        password = single_instance['password']
-        print("Now processing instance " + fqdn + " from the configuration file.")
-        if password == None or password == "":
-            password = getpass("No password found in config file, please enter password (typing hidden) :" )
-        # The login is not even needed.  I need to figure out all the error handling if I don't do this first, for dns errors and so forth.
-        # nms_login(username, password, fqdn)
-        if args.fqdn is not None:
-            fqdn = args.fqdn
-            print("Overriding config file fqdn with the one from the command line")
-            were_outta_here = True
-        if args.username is not None:
-            username = args.username
-            print("Overriding config file username with the one  from the command line")
-        if args.password is not None:
-            password = args.password
-            print("Overriding config file password with the one from the command line")
-        if 1:
-            print("Parameters are: " + username + " " + password + " " + fqdn)
-        try:
-            somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces")
-            if somestuff == None:
-                continue
-            somestuff = somestuff.text
-            jl = json.loads(somestuff)
-            wslinks = jl["_links"]
-            #print(workspaces[1])
-            #print(workspaces[1]["href"])
-        except:
-            continue
-        for ws in wslinks:
-            wspath = ws["href"]
-            #print(wspath)
-            workspace = urlparse(wspath).path.split("/")[-1]
-            print("Workspace:")
-            print("  " + workspace)
-            try:
-                somestuff = getstuff(username, password, fqdn, "/infrastructure/workspaces/" + workspace + "/environments")
-            except:
-                print("woos")
-            print("    environments:")
-            somestuff = somestuff.text
-            jl = json.loads(somestuff)
-            enitems = jl["items"]
-            #we have to loop through these items
-            for enitem in enitems:
-                #print(enitem)
-                enlinks = enitem["_links"]
-                for en in enlinks:
-                    enpath = en["href"]
-                    environment = urlparse(enpath).path.split("/")[-1]
-                    print("      " + environment)
-                nginx_proxies = enitem["proxies"]
-                print("         API Gateways:")
-                for px in nginx_proxies:
-                    hostname = px["hostnames"]
-                    port = px["listeners"][0]["port"]
-                    prot = px["listeners"][0]["transportProtocol"]                    
-                    obcmd = px["onboardingCommands"]
-                    pxclustername = px["proxyClusterName"]
-                    print("           " + hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+    urlpath = nms_api_prefix + "/systems"
+    username = "admin"
+    password = 'NIM123!@#'
+    fqdn = '707ef7cf-7d17-42c7-9588-07f1cf61266b.access.udf.f5.com'
+    somestuff = getstuff(username, password, fqdn, urlpath)
+    somestuff = somestuff.text
+    jl = json.loads(somestuff)
+    #print(json.dumps(jl, indent=2))
+    agent_systems = jl["items"]
+    for agent_sys in agent_systems:
+        ds = agent_sys["displayName"]
+        print(ds)
+        nginx_instances = agent_sys["nginxInstances"]
+        #we have to loop through these items
+        for nginx_instance in nginx_instances:
+            dn = nginx_instance["displayName"]
+            print("\t" + dn)
+            st = nginx_instance["status"]
+            s = st["state"]
+            print("\t\t" + s)
+            print("")
+            
 
-
-
+            
 
 
 
@@ -286,7 +239,7 @@ if __name__ == '__main__':
         username: admin
         password: Testenv12#
     ''', default='nms_instances.yaml')
-    parser.add_argument('--fqdn', help='The Dommain Name for NMS instance, and this will override the DNS name in the config file.', default=None)
+    parser.add_argument('--fqdn', help='The Domain Name for NMS instance, and this will override the DNS name in the config file.', default=None)
     parser.add_argument('--username', help='The login username.  If specified, this will over-ride the username in the config file.', default=None)
     parser.add_argument('--password', help='The login password.  Overrides the config file password.', default=None)
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
@@ -352,8 +305,5 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    acm_post('iworkspace1')
-    acm_post('workspace2')
-    acm_post('workspace3')
     read_all_config()
 
