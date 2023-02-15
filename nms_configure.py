@@ -183,7 +183,7 @@ def yes_or_no(question):
     else: 
         return False
 
-def read_all_config():
+def display_acm_config(config_dict):
     were_outta_here = False
     for one_entry in config_dict["nms_instances"]:
         if were_outta_here:
@@ -267,8 +267,47 @@ def sitecheck(fqdn):
     except requests.ConnectionError as err:
         print("DNS Failed")
 
+def read_config(myargs):
+    configfile = myargs.configfile
+    x = os.path.isfile(configfile)
+    config_dict = {}
+    if x:
+        print("Reading default config file nms_instances.yaml from current folder.")
+        try:
+            configfile_text = open(configfile, 'r')
+            config_dict = yaml.load(configfile_text, Loader=yaml.FullLoader)
+            if debugme:
+                print ("")
+                print ("")
+                print(config_dict)
+                print ("")
+                print ("")
+        except OSError:
+            print("Could not open/read file: ", configfile)
+            sys.exit()
 
-if __name__ == '__main__':
+    if myargs.hostname is not None:
+        print("Overriding all config file hostnames with '" + myargs.hostname + "' from the command line")
+    if myargs.username is not None:
+        print("Overriding all config file usernames with '" + myargs.username + "' from the command line")
+    if myargs.password is not None:
+        print("Overriding all config file passwords with '" + myargs.password + "' from the command line")
+
+    i = -1
+    for single_entry in config_dict["nms_instances"]:
+        i = i + 1
+        if myargs.hostname is not None:
+            config_dict["nms_instances"][i]["hostname"] = myargs.hostname
+            #x["stuff"][0]['a'] = 99
+        if myargs.username is not None:
+            config_dict["nms_instances"][i]["username"] = myargs.username
+        if myargs.password is not None:
+            config_dict["nms_instances"][i]["password"] = myargs.password
+        #print(sitecheck(config_dict["nms_instances"][i]["hostname"]))
+
+    return config_dict
+
+def do_args():
     parser = argparse.ArgumentParser(description='Login to NMS', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--configfile', help='''
     default: nms_instances.yaml in current folder.
@@ -286,31 +325,15 @@ if __name__ == '__main__':
     parser.add_argument('--username', help='The login username.  If specified, this will over-ride the username in the config file.', default=None)
     parser.add_argument('--password', help='The login password.  Overrides the config file password.', default=None)
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
-    args = parser.parse_args()
-    configfile = args.configfile
+    myargs = parser.parse_args()
+    configfile = myargs.configfile
     debugme = False
-    if args.debug.lower().strip() == "true":
+    if myargs.debug.lower().strip() == "true":
         debugme = True
-
-    config_dict = {}
 
     x = os.path.isfile(configfile)
     if x:
-        print("Reading default config file nms_instances.yaml from current folder.")
-        try:
-            configfile_text = open(configfile, 'r')
-            config_dict = yaml.load(configfile_text, Loader=yaml.FullLoader)
-            if debugme:
-                print ("")
-                print ("")
-                print(config_dict)
-                print ("")
-                print ("")
-        except OSError:
-            print("Could not open/read file: ", configfile)
-            sys.exit()
-
-
+        return myargs
     if not x:
         print("The config file you specified ( " + configfile + " ) (default is nms_instances.yaml in current folder) does not seem to exist. The --configfile parameter can specify the config file.")
         x = yes_or_no("Would you like to interactively specify the parameters? ")
@@ -343,32 +366,18 @@ if __name__ == '__main__':
             # and the following is if we want to assign, yay it works!
             password = ""
             config_dict["nms_instances"] = [{"hostname": hostname, "username": username, "password":  password}]
+            return myargs
 
         else:
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    if args.hostname is not None:
-        print("Overriding all config file hostnames with '" + args.hostname + "' from the command line")
-    if args.username is not None:
-        print("Overriding all config file usernames with '" + args.username + "' from the command line")
-    if args.password is not None:
-        print("Overriding all config file passwords with '" + args.password + "' from the command line")
-
-    i = -1
-    for single_entry in config_dict["nms_instances"]:
-        i = i + 1
-        if args.hostname is not None:
-            config_dict["nms_instances"][i]["hostname"] = args.hostname
-            #x["stuff"][0]['a'] = 99
-        if args.username is not None:
-            config_dict["nms_instances"][i]["username"] = args.username
-        if args.password is not None:
-            config_dict["nms_instances"][i]["password"] = args.password
-        #print(sitecheck(config_dict["nms_instances"][i]["hostname"]))
+if __name__ == '__main__':
+    myargs = do_args()
+    config_dict = read_config(myargs)
 
     acm_post('iworkspace1')
     #acm_post('workspace2')
     #acm_post('workspace3')
-    read_all_config()
+    display_acm_config(config_dict)
 
