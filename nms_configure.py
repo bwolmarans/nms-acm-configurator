@@ -60,13 +60,15 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             return r
 
     except requests.HTTPError as err:
-        print("")
         print("HTTP layer 7 error: " + str(r) + " " + str(r.content))
+
+    except requests.ConnectionError as err:
+        print("DNS failure :" + str(err))
 
     except requests.exceptions.RequestException as e:
         print("error: " + str(e))
 
-def sssuper_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
+def extra_super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
     try:
         if verb == "GET":
             r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
@@ -133,17 +135,6 @@ def sssuper_req(verb, url, params=None, allow_redirects=True, auth=None, cert=No
         # catastrophic error. bail.
         print("")
 
-def getstuff(username, password, hostname, path):
-    nms_url = 'https://' + hostname + "/" + acm_api_prefix + path
-    if debugme:
-        print("We now try to get stuff from " + nms_url)
-    try:
-        r = sssuper_req("GET", nms_url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        return r
-    except:
-        return None
-
-
 def nms_login(username, password, hostname):
     nms_url = 'https://' + hostname + "/" + nms_api_prefix + "/license"
     #if debugme:
@@ -156,16 +147,6 @@ def nms_login(username, password, hostname):
         print("login succeeded")
     except:
         print("login failed")
-
-def waas_api_get(token, path):
-    res = requests.get(urljoin(API_BASE, path), headers={"Content-Type": "application/json", 'auth-api': token}, proxies=proxies)
-    res.raise_for_status()
-    return res.json()
-
-def waas_api_post(token, path, mydata):
-    res = requests.post(urljoin(API_BASE, path), headers={"Content-Type": "application/json", "Accept": "application/json",'auth-api': token}, data=mydata, proxies=proxies)
-    print(res.json())
-
 
 def yes_or_no(question):
     # Fix Python 2.x.
@@ -183,78 +164,63 @@ def yes_or_no(question):
     else: 
         return False
 
-def display_acm_config(config_dict):
-    were_outta_here = False
-    for one_entry in config_dict["nms_instances"]:
-        if were_outta_here:
+def display_acm_config(one_nms_instance):
+    if debugme:
+        print(one_nms_instance)
+    hostname = one_nms_instance['hostname']
+    username = one_nms_instance['username']
+    password = one_nms_instance['password']
+    print("Displaying config for NMS ACM:" + hostname)
+    if password == None or password == "":
+        password = getpass("No password found in config file, please enter password (typing hidden) :" )
+    url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
+    if debugme:
+        print("We now try to get stuff from " + nms_url)
+    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    if r == None:
+        return None
+    jl = json.loads(r.text)
+    wslinks = jl["_links"]
+    for ws in wslinks:
+        wspath = ws["href"]
+        workspace = urlparse(wspath).path.split("/")[-1]
+        print("Workspace:")
+        print("  " + workspace)
+        url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/environments"
+        r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        if r == None:
             continue
-        print("---****---***---***---***---***---***---***---")
-        if debugme:
-            print(one_entry)
-        hostname = one_entry['hostname']
-        username = one_entry['username']
-        password = one_entry['password']
-        print("Now processing NMS " + hostname + " from the configuration file.")
-        if password == None or password == "":
-            password = getpass("No password found in config file, please enter password (typing hidden) :" )
-        if 1:
-            print("Parameters are: " + username + " " + password + " " + hostname)
-        somestuff = getstuff(username, password, hostname, "/infrastructure/workspaces")
-        if somestuff == None:
-            continue
-        somestuff = somestuff.text
-        jl = json.loads(somestuff)
-        wslinks = jl["_links"]
-        #print(workspaces[1])
-        #print(workspaces[1]["href"])
-        for ws in wslinks:
-            wspath = ws["href"]
-            #print(wspath)
-            workspace = urlparse(wspath).path.split("/")[-1]
-            print("Workspace:")
-            print("  " + workspace)
-            try:
-                somestuff = getstuff(username, password, hostname, "/infrastructure/workspaces/" + workspace + "/environments")
-            except:
-                print("woos")
-            print("    environments:")
-            somestuff = somestuff.text
-            jl = json.loads(somestuff)
-            enitems = jl["items"]
-            for enitem in enitems:
-                #print(enitem)
-                enlinks = enitem["_links"]
-                for en in enlinks:
-                    enpath = en["href"]
-                    environment = urlparse(enpath).path.split("/")[-1]
-                    print("      " + environment)
-                nginx_proxies = enitem["proxies"]
-                print("         API Gateways:")
-                for px in nginx_proxies:
-                    apigw_hostname = px["hostnames"]
-                    port = px["listeners"][0]["port"]
-                    prot = px["listeners"][0]["transportProtocol"]                    
-                    obcmd = px["onboardingCommands"]
-                    pxclustername = px["proxyClusterName"]
-                    print("           " + apigw_hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+        print("    environments:")
+        jl = json.loads(r.text)
+        enitems = jl["items"]
+        for enitem in enitems:
+            enlinks = enitem["_links"]
+            for en in enlinks:
+                enpath = en["href"]
+                environment = urlparse(enpath).path.split("/")[-1]
+                print("      " + environment)
+            nginx_proxies = enitem["proxies"]
+            print("         API Gateways:")
+            for px in nginx_proxies:
+                apigw_hostname = px["hostnames"]
+                port = px["listeners"][0]["port"]
+                prot = px["listeners"][0]["transportProtocol"]                    
+                obcmd = px["onboardingCommands"]
+                pxclustername = px["proxyClusterName"]
+                print("           " + apigw_hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
 
 
-
-def acm_post(workspace):
+def acm_create_workspace(workspace):
     #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
     username = "admin"
     password = "Testenv12#"
     hostname = "brett4.seattleis.cool"
-    somestuff = poststuff(username, password, hostname, "/infrastructure/workspaces", data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}')
-
-
-def poststuff(username, password, hostname, path, data):
-    nms_url = 'https://' + hostname
-    url = urljoin(nms_url, acm_api_prefix + path)
-    if debugme:
-        print("We are going to POST some stuff to " + url)
+    data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
+    url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
+    print("Creating ACM Workspace: " + workspace + " on " + url)
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
+
 
 def sitecheck(fqdn):
     status = None
@@ -267,7 +233,7 @@ def sitecheck(fqdn):
     except requests.ConnectionError as err:
         print("DNS Failed")
 
-def read_config(myargs):
+def read_config_file(myargs):
     configfile = myargs.configfile
     x = os.path.isfile(configfile)
     config_dict = {}
@@ -307,7 +273,7 @@ def read_config(myargs):
 
     return config_dict
 
-def do_args():
+def process_commandline_arguments():
     parser = argparse.ArgumentParser(description='Login to NMS', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--configfile', help='''
     default: nms_instances.yaml in current folder.
@@ -373,11 +339,13 @@ def do_args():
             sys.exit()
 
 if __name__ == '__main__':
-    myargs = do_args()
-    config_dict = read_config(myargs)
+    myargs = process_commandline_arguments()
+    config_dict = read_config_file(myargs)
 
-    acm_post('iworkspace1')
+    acm_create_workspace('iworkspace1')
     #acm_post('workspace2')
     #acm_post('workspace3')
-    display_acm_config(config_dict)
+    for one_nms_instance in config_dict["nms_instances"]:
+        r = display_acm_config(one_nms_instance)
+            
 
