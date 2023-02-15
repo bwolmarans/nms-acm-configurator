@@ -235,5 +235,5 @@ if __name__ == '__main__':
             print("OK, well, then we have no params, then we can't continue, exiting.")
             sys.exit()
 
-    delete_the_offline_instances()
+    delete_the_offline_instances(hostname)
 
