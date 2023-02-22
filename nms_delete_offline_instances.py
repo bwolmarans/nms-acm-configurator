@@ -24,6 +24,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
 # GLOBALS
+first_host = False
 acm_api_prefix = "api/acm/v1"
 nms_api_prefix = "api/platform/v1"
 proxies = { 'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080', }
@@ -245,7 +246,9 @@ def read_config(myargs):
             sys.exit()
 
     if myargs.hostname is not None:
-        print("Overriding all config file hostnames with '" + myargs.hostname + "' from the command line")
+        print("You specified hostname '" + myargs.hostname + "' so we will process only that one host")
+        global first_host 
+        first_host = True
     if myargs.username is not None:
         print("Overriding all config file usernames with '" + myargs.username + "' from the command line")
     if myargs.password is not None:
@@ -277,6 +280,8 @@ if __name__ == '__main__':
         password = config_dict["nms_instances"][i]["password"]
         #get_nginx_instances(hostname, username, password)
         delete_offline_nginx_instances(hostname, username, password)
+        if first_host:
+            exit()
     #acm_post('iworkspace1')
     ##acm_post('workspace2')
     ##acm_post('workspace3')
