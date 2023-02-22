@@ -1,3 +1,7 @@
+This is draft.
+Docs are TBD.
+
+
 bwolmarans@86P93D3:~/src/nms-acm-configurator$ python nms_configure.py --help
 usage: nms_configure.py [-h] [--configfile CONFIGFILE] [--fqdn FQDN]
                         [--username USERNAME] [--password PASSWORD]
