@@ -210,11 +210,11 @@ def display_acm_config(one_nms_instance):
                 print("           " + apigw_hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
 
 
-def acm_create_workspace(workspace):
+def acm_create_workspace(hostname, username, admin, workspace):
     #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
-    username = "admin"
-    password = "Testenv12#"
-    hostname = "brett4.seattleis.cool"
+    #username = "admin"
+    #password = "Testenv12#"
+    #hostname = "brett4.seattleis.cool"
     data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
     print("Creating ACM Workspace: " + workspace + " on " + url)
@@ -342,10 +342,13 @@ if __name__ == '__main__':
     myargs = process_commandline_arguments()
     config_dict = read_config_file(myargs)
 
-    acm_create_workspace('iworkspace1')
-    #acm_post('workspace2')
-    #acm_post('workspace3')
     for one_nms_instance in config_dict["nms_instances"]:
         r = display_acm_config(one_nms_instance)
+        hostname = one_nms_instance['hostname']
+        username = one_nms_instance['username']
+        password = one_nms_instance['password']
+        acm_create_workspace(hostname, username, password, 'team-sentence')
+        r = display_acm_config(one_nms_instance)
+        acm_delete_workspace(hostname, username, password, 'team-sentence')
             
 
