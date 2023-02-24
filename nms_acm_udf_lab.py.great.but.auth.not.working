@@ -43,15 +43,16 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
     if headers == None:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-    dprint("")
-    dprint("super_req debug info")
-    dprint("--------------------")
-    dprint("URL: " + url)
-    dprint("Verb: " + verb)
-    dprint("Headers: " + str(headers))
-    dprint("Basic Auth: " + str(auth.username) + " " + str(auth.password))
-    dprint("Data: " + str(data))
-    dprint("Parameters: " + str(params))
+    if debugme:
+        print("")
+        print("super_req debug info")
+        print("--------------------")
+        print("URL: " + url)
+        print("Verb: " + verb)
+        print("Headers: " + str(headers))
+        print("Basic Auth: " + str(auth.username) + " " + str(auth.password))
+        print("Data: " + str(data))
+        print("Parameters: " + str(params))
     
     try:
         if verb == "GET":
@@ -72,18 +73,18 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             r.raise_for_status()
             return r
 
+
     except requests.HTTPError as err:
-        print(">>> BEGIN ERROR MESSAGE >>>")
-        print(str(r))
-        print(str(r.content))
-        print(">>> END   ERROR MESSAGE >>>")
+        print("")
+        print("HTTP layer 7 error: " + str(r) + " " + str(r.content))
 
     except requests.exceptions.RequestException as e:
-        print(">>>>>>>>> ERROR: " + str(e))
+        print("error: " + str(e))
 
 def getstuff(username, password, hostname, path):
     url = 'https://' + hostname + "/" + acm_api_prefix + path
-    dprint("We now try to get stuff from " + url)
+    if debugme:
+        print("We now try to get stuff from " + url)
     try:
         r = sssuper_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         return r
@@ -171,14 +172,14 @@ def get_nginx_instances(hostname, username, password):
 def do_args():
     parser = argparse.ArgumentParser(description='Login to NMS', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--hostname', help='The Domain Name for NMS this will override the DNS name in the config file.', default=os.environ.get('NGINX_NMS_HOSTNAME'))
-    parser.add_argument('--username', help='The NMS login username NGINX_NMS_USERNAME', default=os.environ.get('NGINX_NMS_USERNAME'))
-    parser.add_argument('--password', help='The NMS login password NGINX_NMS_PASSWORD', default=os.environ.get('NGINX_NMS_PASSWORD'))
-    parser.add_argument('--apigw_username', help='APIGW host login username NGINX_APIGW_USERNAME', default=os.environ.get('NGINX_APIGW_USERNAME'))
-    parser.add_argument('--apigw_password', help='APIGW host login password NGINX_APIGW_PASSWORD', default=os.environ.get('NGINX_APIGW_PASSWORD'))
-    parser.add_argument('--apigw_key_file', help='APIGW host ssh key file NGINX_APIGW_SSH_KEYFILE', default=os.environ.get('NGINX_APIGW_SSH_KEYFILE')) 
-    parser.add_argument('--devportal_username', help='DevPortal host login username NGINX_DEVPORTAL_USERNAME', default=os.environ.get('NGINX_DEVPORTAL_USERNAME'))
-    parser.add_argument('--devportal_password', help='DevPortal host login password NGINX_DEVPORTAL_PASSWORD', default=os.environ.get('NGINX_DEVPORTAL_PASSWORD')) 
-    parser.add_argument('--devportal_ssh_key_file', help='DevPortal host ssh key file NGINX_DEVPORTAL_SSH_KEYFILE', default=os.environ.get('NGINX_DEVPORTAL_SSH_KEYFILE'))
+    parser.add_argument('--username', help='The NMS login username. If not specified, will try from environment variable NGINX_NMS_USERNAME', default=os.environ.get('NGINX_NMS_USERNAME'))
+    parser.add_argument('--password', help='The NMS login password. If not specified, will try from environment variable NGINX_NMS_PASSWORD', default=os.environ.get('NGINX_NMS_PASSWORD'))
+    parser.add_argument('--apigw_username', help='The APIGW host login password. If not specified, will try from environment NGINX_APIGW_USERNAME', default=os.environ.get('NGINX_APIGW_USERNAME'))
+    parser.add_argument('--apigw_password', help='The APIGW host login password. If not specified, will try from environment NGINX_APIGW_PASSWORD', default=os.environ.get('NGINX_APIGW_PASSWORD'))
+    parser.add_argument('--apigw_key_file', help='The APIGW host ssh key file. If not specified, will try from environment NGINX_APIGW_SSH_KEYFILE', default=os.environ.get('NGINX_APIGW_SSH_KEYFILE')) 
+    parser.add_argument('--devportal_username', help='The DevPortal host login password. If not specified, will try from environment NGINX_DEVPORTAL_USERNAME', default=os.environ.get('NGINX_DEVPORTAL_USERNAME'))
+    parser.add_argument('--devportal_password', help='The DevPortal host login password. If not specified, will try from environment NGINX_DEVPORTAL_PASSWORD', default=os.environ.get('NGINX_DEVPORTAL_PASSWORD')) 
+    parser.add_argument('--devportal_ssh_key_file', help='The DevPortal host ssh key file. If not specified, will try from environment NGINX_DEVPORTAL_SSH_KEYFILE', default=os.environ.get('NGINX_DEVPORTAL_SSH_KEYFILE'))
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
     myargs = parser.parse_args()
     
@@ -192,7 +193,8 @@ def display_acm_config(hostname, username, password):
     if password == None or password == "":
         password = getpass("No password found, please enter password (typing hidden) :" )
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
-    dprint("We now try to get stuff from " + url)
+    if debugme:
+        print("We now try to get stuff from " + url)
     r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     if r == None:
         return None
@@ -260,7 +262,8 @@ def acm_create_environment(hostname, username, password, workspace, environment,
 
 def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
-    dprint(x)#paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
+    print(x)
+    #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(agent_host_hostname, username=agent_host_username, password=agent_host_password)
@@ -269,13 +272,9 @@ def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username
         print(line)
     client.close()
 
-def dprint(x):
-    if debugme:
-        print("DEBUG: " + str(x))
-
 def acm_apigw_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g api-cluster && sudo systemctl start nginx-agent'
-    dprint(x)
+    print(x)
     #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -311,24 +310,12 @@ class SecretsGateway:
 #                secret = json.loads(secret)
 #                return secret
 
-
-def acm_create_workspace(hostname, username, admin, workspace):
-    #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
-    #username = "admin"
-    #password = "Testenv12#"
-    #hostname = "brett4.seattleis.cool"
-    data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
-    url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
-    print("Creating ACM Workspace: " + workspace + " on " + url)
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-    return r
+secrets_gateway = SecretsGateway()
+secrets = secrets_gateway.get_secrets()
+#print(secrets.get('NGINX_NMS_USERNAME'))
+#print(os.getenv('NGINX_NMS_USERNAME'))
 
 if __name__ == '__main__':
-
-    secrets_gateway = SecretsGateway()
-    secrets = secrets_gateway.get_secrets()
-    #print(secrets.get('NGINX_NMS_USERNAME'))
-    #print(os.getenv('NGINX_NMS_USERNAME'))
 
     myargs = do_args()
     hostname = myargs.hostname
@@ -344,11 +331,12 @@ if __name__ == '__main__':
     #get_nginx_instances(hostname, username, password)
     #delete_offline_nginx_instances(hostname, username, password)
     #acm_delete_workspace(hostname, username, password, "team-sentence")
-    display_acm_config(hostname, username, password)
-    acm_create_workspace(hostname, username, password, "team-sentence")
+    #acm_create_workspace(hostname, username, password, "team-sentence")
+
 
     #wss = acm_get_workspaces(hostname, username, password)
     #print(wss)
+    display_acm_config(hostname, username, password)
     acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
     display_acm_config(hostname, username, password)
     acm_apigw_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
