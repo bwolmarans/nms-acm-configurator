@@ -1,5 +1,6 @@
 # for Python 2 compatibility
 from __future__ import print_function
+import paramiko
 import yaml
 import json
 import argparse
@@ -178,6 +179,7 @@ def do_args():
     parser.add_argument('--username', help='The login username.  If specified, this will over-ride the username in the config file.', default=None)
     parser.add_argument('--password', help='The login password.  Overrides the config file password.', default=None)
     parser.add_argument('--debug', help='True or False, turns debugging on or off', default="False")
+    parser.add_argument('--sshkey', help='Path to your SSH key file for Paramikoing or Ansibiling around to install the agent', default=None)
     myargs = parser.parse_args()
     configfile = myargs.configfile
     
@@ -324,7 +326,7 @@ def display_acm_config(one_nms_instance):
                 obcmd = px["onboardingCommands"]
                 pxclustername = px["proxyClusterName"]
                 print("           " + apigw_hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
-                print(obcmd)
+                #print(obcmd)
 
 
 def acm_get_workspaces(hostname, username, password):
@@ -359,18 +361,29 @@ def acm_create_environment(hostname, username, password, workspace, environment,
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
-def acm_onboard(hostname, remote_hostname):
-    x = 'curl -k https://' + hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
-    import paramiko
+
+def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
+    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
+    print(x)
+    #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(remote_hostname, username='ubuntu', password='my_strong_password', key_filename='<path/to/openssh-private-key-file>')
-
-    stdin, stdout, stderr = client.exec_command('ls -l')
-
+    client.connect(agent_host_hostname, username=agent_host_username, password=agent_host_password)
+    stdin, stdout, stderr = client.exec_command(x)
     for line in stdout:
-        print line.strip('\n')
+        print(line)
+    client.close()
 
+def acm_apigw_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
+    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g api-cluster && sudo systemctl start nginx-agent'
+    print(x)
+    #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(agent_host_hostname, username=agent_host_username, password=agent_host_password)
+    stdin, stdout, stderr = client.exec_command(x)
+    for line in stdout:
+        print(line)
     client.close()
 
 if __name__ == '__main__':
@@ -387,10 +400,14 @@ if __name__ == '__main__':
         #delete_offline_nginx_instances(hostname, username, password)
         #acm_delete_workspace(hostname, username, password, "team-sentence")
         #acm_create_workspace(hostname, username, password, "team-sentence")
-        acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
+
+
         #wss = acm_get_workspaces(hostname, username, password)
         #print(wss)
+
+        #acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
         display_acm_config(single_entry)
+        acm_apigw_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
         #envs = acm_get_environments(hostname, username, password, "team-sentence")
         #print(envs)
 
