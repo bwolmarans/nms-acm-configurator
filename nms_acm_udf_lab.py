@@ -95,36 +95,12 @@ def getstuff(username, password, hostname, path):
         return None
 
 
-def yes_or_no(question):
-    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    # Fix Python 2.x.
-    if python_major_version == 2:
-        reply = str(raw_input(question + ' (Y/n): ')).lower().strip()
-    elif python_major_version == 3:
-        reply = str(input(question + ' (Y/n): ')).lower().strip()
-    else:
-        assert("You r not using Python v 2 nor 3, so it is game over.")
-
-    if reply == '':
-        return True
-    elif reply[0] == 'y':
-        return True
-    else: 
-        return False
-
 def get_end(mypath, item = -1):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     return urlparse(mypath).path.split("/")[item]
 
 def delete_offline_nginx_instances(hostname, username, password):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    return urlparse(mypath).path.split("/")[item]
-
-def delete_offline_nginx_instances(hostname, username, password):
-    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    #hostname = "XXX707ef7cf-7d17-42c7-9588-07f1cf61266b.access.udf.f5.com"
-    #username = "admin"
-    #password = 'NIM123!@#'
     url = "https://" + hostname + "/" + nms_api_prefix + "/systems"
     r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     t = r.text
@@ -312,28 +288,8 @@ class SecretsGateway:
                 return json.loads(f.read())
         except FileNotFoundError:
             return {}
-#    def from_aws(self, secret_name: str) -> dict:
-#        region_name = os.environ['AWS_REGION']
-#        session = boto3.session.Session()
-#        client = session.client(service_name='secretsmanager', region_name=region_name)
-#        try:
-#            get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-#        except ClientError as e:
-#            print(e.response['Error']['Code'])
-#            return {}
-#        else:
-#            if 'SecretString' in get_secret_value_response:
-#                secret = get_secret_value_response['SecretString']
-#                secret = json.loads(secret)
-#                return secret
-
-
 def acm_create_workspace(hostname, username, admin, workspace):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
-    #username = "admin"
-    #password = "Testenv12#"
-    #hostname = "brett4.seattleis.cool"
     data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
     print("Creating ACM Workspace: " + workspace + " on " + url)
