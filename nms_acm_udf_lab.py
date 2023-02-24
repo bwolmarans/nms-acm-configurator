@@ -1,5 +1,9 @@
 # for Python 2 compatibility
 from __future__ import print_function
+# for AWS secret manager
+import boto3
+from botocore.exceptions import ClientError
+
 import paramiko
 import yaml
 import json
@@ -104,6 +108,9 @@ def yes_or_no(question):
         return False
 
 def get_end(mypath, item = -1):
+    return urlparse(mypath).path.split("/")[item]
+
+def delete_offline_nginx_instances(hostname, username, password):
     return urlparse(mypath).path.split("/")[item]
 
 def delete_offline_nginx_instances(hostname, username, password):
@@ -350,9 +357,6 @@ def acm_delete_workspace(hostname, username, password, workspace):
     r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     return(r)
 
-def acm_create_workspace(hostname, username, password, workspace):
-    data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
-    url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
@@ -386,6 +390,39 @@ def acm_apigw_onboard(nms_hostname, agent_host_hostname, agent_host_username, ag
         print(line)
     client.close()
 
+class SecretsGateway:
+    def get_secrets(self) -> dict:
+        #return self.from_json() or self.from_aws('<secrets-name>')
+        return self.from_json() 
+    def from_json(self) -> dict:
+        filename = os.path.join('secrets.json')
+        try:
+            with open(filename, mode='r') as f:
+                return json.loads(f.read())
+        except FileNotFoundError:
+            return {}
+#    def from_aws(self, secret_name: str) -> dict:
+#        region_name = os.environ['AWS_REGION']
+#        session = boto3.session.Session()
+#        client = session.client(service_name='secretsmanager', region_name=region_name)
+#        try:
+#            get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+#        except ClientError as e:
+#            print(e.response['Error']['Code'])
+#            return {}
+#        else:
+#            if 'SecretString' in get_secret_value_response:
+#                secret = get_secret_value_response['SecretString']
+#                secret = json.loads(secret)
+#                return secret
+secrets_gateway = SecretsGateway()
+secrets = secrets_gateway.get_secrets()
+print(secrets.get('NGINX_NMS_USERNAME'))
+print(os.getenv('NGINX_NMS_USERNAME'))
+print(secrets.get('NGINX_NMS_PASSWORD'))
+print(os.getenv('NGINX_NMS_PASSWORD'))
+quit()
+
 if __name__ == '__main__':
 
     myargs = do_args()
@@ -408,6 +445,7 @@ if __name__ == '__main__':
         #acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
         display_acm_config(single_entry)
         acm_apigw_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
+        acm_devportal_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
         #envs = acm_get_environments(hostname, username, password, "team-sentence")
         #print(envs)
 

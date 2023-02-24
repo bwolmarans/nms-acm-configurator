@@ -1,8 +1,18 @@
 This is draft.
 Docs are TBD.
-Ignore everything after this line. :-)
+Ignore everything after this line until further notice. :-)
 
 
+Set your environment variables:
+
+export NGINX_NMS_USERNAME='admin'
+export NGINX_NMS_PASSWORD='NGINX123!@#'
+
+---------------------------------------------------SNIP------------------------------------------------------------------------
+
+Notes: 
+
+We are going to get away from the multiple NMS configuration file for this version.  We can always just call this several times from that file.  It was a fun experiement.
 
 bwolmarans@86P93D3:~/src/nms-acm-configurator$ python nms_configure.py --help
 usage: nms_configure.py [-h] [--configfile CONFIGFILE] [--fqdn FQDN]
