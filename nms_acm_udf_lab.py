@@ -4,6 +4,7 @@ from __future__ import print_function
 import boto3
 from botocore.exceptions import ClientError
 
+import inspect
 import paramiko
 import yaml
 import json
@@ -39,6 +40,8 @@ python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
 def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
+
 
     if headers == None:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -82,6 +85,7 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         print(">>>>>>>>> ERROR: " + str(e))
 
 def getstuff(username, password, hostname, path):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = 'https://' + hostname + "/" + acm_api_prefix + path
     dprint("We now try to get stuff from " + url)
     try:
@@ -92,6 +96,7 @@ def getstuff(username, password, hostname, path):
 
 
 def yes_or_no(question):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     # Fix Python 2.x.
     if python_major_version == 2:
         reply = str(raw_input(question + ' (Y/n): ')).lower().strip()
@@ -108,12 +113,15 @@ def yes_or_no(question):
         return False
 
 def get_end(mypath, item = -1):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     return urlparse(mypath).path.split("/")[item]
 
 def delete_offline_nginx_instances(hostname, username, password):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     return urlparse(mypath).path.split("/")[item]
 
 def delete_offline_nginx_instances(hostname, username, password):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     #hostname = "XXX707ef7cf-7d17-42c7-9588-07f1cf61266b.access.udf.f5.com"
     #username = "admin"
     #password = 'NIM123!@#'
@@ -143,6 +151,7 @@ def delete_offline_nginx_instances(hostname, username, password):
                 print(str(r))
 
 def get_nginx_instances(hostname, username, password):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = "https://" + hostname + "/" + nms_api_prefix + "/systems"
     try:
         r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
@@ -169,6 +178,7 @@ def get_nginx_instances(hostname, username, password):
         print("")
 
 def do_args():
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     parser = argparse.ArgumentParser(description='Login to NMS', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--hostname', help='The Domain Name for NMS this will override the DNS name in the config file.', default=os.environ.get('NGINX_NMS_HOSTNAME'))
     parser.add_argument('--username', help='The NMS login username NGINX_NMS_USERNAME', default=os.environ.get('NGINX_NMS_USERNAME'))
@@ -188,7 +198,8 @@ def do_args():
     return myargs
 
 def display_acm_config(hostname, username, password):
-    print("Displaying config for NMS ACM:" + hostname)
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
+    dprint("Displaying config for NMS ACM:" + hostname)
     if password == None or password == "":
         password = getpass("No password found, please enter password (typing hidden) :" )
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
@@ -229,22 +240,24 @@ def display_acm_config(hostname, username, password):
 
 
 def acm_get_workspaces(hostname, username, password):
-        wss = []
-        url = "https://" + hostname + "/" + acm_api_prefix + "/" + "infrastructure/workspaces"
-        r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        if r == None:
-            return None
-        jl = json.loads(r.text)
-        wslinks = jl["_links"]
-        for ws in wslinks:
-            wspath = ws["href"]
-            workspace = urlparse(wspath).path.split("/")[-1]
-            #print("Workspace:")
-            #print("  " + workspace)
-            wss.append(workspace)
-        return wss
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
+    wss = []
+    url = "https://" + hostname + "/" + acm_api_prefix + "/" + "infrastructure/workspaces"
+    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    if r == None:
+        return None
+    jl = json.loads(r.text)
+    wslinks = jl["_links"]
+    for ws in wslinks:
+        wspath = ws["href"]
+        workspace = urlparse(wspath).path.split("/")[-1]
+        #print("Workspace:")
+        #print("  " + workspace)
+        wss.append(workspace)
+    return wss
 
 def acm_delete_workspace(hostname, username, password, workspace):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = 'https://' + hostname + "/" + acm_api_prefix + "/" + "infrastructure/workspaces/" + workspace
     r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     return(r)
@@ -253,12 +266,14 @@ def acm_delete_workspace(hostname, username, password, workspace):
     return r
 
 def acm_create_environment(hostname, username, password, workspace, environment, apicluster_name, apicluster_fqdn, devportal_name, devportal_fqdn):
-    data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
+    data = '{"name":"sentence-env","type":"NON-PROD",">>> welcome to functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
     dprint(x)#paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
@@ -274,6 +289,7 @@ def dprint(x):
         print("DEBUG: " + str(x))
 
 def acm_apigw_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g api-cluster && sudo systemctl start nginx-agent'
     dprint(x)
     #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
@@ -313,6 +329,7 @@ class SecretsGateway:
 
 
 def acm_create_workspace(hostname, username, admin, workspace):
+    dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     #curl -u admin:Testenv12# -k -X POST "https://brett4.seattleis.cool/api/acm/v1/infrastructure/workspaces"  --header 'content-type: application/json' --data-raw '{"name": "workspace2","metadata": {"description": "App Development Workspace"}}'
     #username = "admin"
     #password = "Testenv12#"
