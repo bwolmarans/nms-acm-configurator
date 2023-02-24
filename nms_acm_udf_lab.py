@@ -324,6 +324,7 @@ def display_acm_config(one_nms_instance):
                 obcmd = px["onboardingCommands"]
                 pxclustername = px["proxyClusterName"]
                 print("           " + apigw_hostname[0] + ":" + str(port) + " " + prot + "clusterName:" + pxclustername )
+                print(obcmd)
 
 
 def acm_get_workspaces(hostname, username, password):
@@ -353,11 +354,24 @@ def acm_create_workspace(hostname, username, password, workspace):
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
-def acm_create_environment(hostname, username, password, workspace, environment):
-    data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["dev.sentence.com"],"proxyClusterName":"devportal-cluster","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["api.sentence.com"],"proxyClusterName":"api-cluster","runtime":"GATEWAY-PROXY","policies":{}}]}'
+def acm_create_environment(hostname, username, password, workspace, environment, apicluster_name, apicluster_fqdn, devportal_name, devportal_fqdn):
+    data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
+def acm_onboard(hostname, remote_hostname):
+    x = 'curl -k https://' + hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
+    import paramiko
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(remote_hostname, username='ubuntu', password='my_strong_password', key_filename='<path/to/openssh-private-key-file>')
+
+    stdin, stdout, stderr = client.exec_command('ls -l')
+
+    for line in stdout:
+        print line.strip('\n')
+
+    client.close()
 
 if __name__ == '__main__':
 
@@ -373,7 +387,7 @@ if __name__ == '__main__':
         #delete_offline_nginx_instances(hostname, username, password)
         #acm_delete_workspace(hostname, username, password, "team-sentence")
         #acm_create_workspace(hostname, username, password, "team-sentence")
-        acm_create_environment(hostname, username, password, "team-sentence", "sentence-env")
+        acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
         #wss = acm_get_workspaces(hostname, username, password)
         #print(wss)
         display_acm_config(single_entry)
