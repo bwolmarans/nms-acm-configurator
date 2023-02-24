@@ -76,11 +76,11 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         print("error: " + str(e))
 
 def getstuff(username, password, hostname, path):
-    nms_url = 'https://' + hostname + "/" + acm_api_prefix + path
+    url = 'https://' + hostname + "/" + acm_api_prefix + path
     if debugme:
-        print("We now try to get stuff from " + nms_url)
+        print("We now try to get stuff from " + url)
     try:
-        r = sssuper_req("GET", nms_url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = sssuper_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         return r
     except:
         return None
@@ -354,7 +354,6 @@ def acm_create_workspace(hostname, username, password, workspace):
     return r
 
 def acm_create_environment(hostname, username, password, workspace, environment):
-    #data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
     data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["dev.sentence.com"],"proxyClusterName":"devportal-cluster","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["api.sentence.com"],"proxyClusterName":"api-cluster","runtime":"GATEWAY-PROXY","policies":{}}]}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
@@ -372,15 +371,14 @@ if __name__ == '__main__':
         password = config_dict["nms_instances"][i]["password"]
         #get_nginx_instances(hostname, username, password)
         #delete_offline_nginx_instances(hostname, username, password)
-        display_acm_config(single_entry)
-        acm_delete_workspace(hostname, username, password, "team-sentence")
-        acm_create_workspace(hostname, username, password, "team-sentence")
+        #acm_delete_workspace(hostname, username, password, "team-sentence")
+        #acm_create_workspace(hostname, username, password, "team-sentence")
         acm_create_environment(hostname, username, password, "team-sentence", "sentence-env")
-        wss = acm_get_workspaces(hostname, username, password)
-        print(wss)
+        #wss = acm_get_workspaces(hostname, username, password)
+        #print(wss)
         display_acm_config(single_entry)
-        envs = acm_get_environments(hostname, username, password, "team-sentence")
-        print(envs)
+        #envs = acm_get_environments(hostname, username, password, "team-sentence")
+        #print(envs)
 
 
 
