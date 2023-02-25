@@ -1,13 +1,70 @@
-This is draft.
-Docs are TBD.
-Ignore everything after this line until further notice. :-)
-
+NGINX Network Management Suite - Python Module
+----------------------------------------------
+Description: This module provides common functions for NMS, especially ACM.  This is draft work in progress and is not ready for production.
+Author: Brett Wolmarans, F5 bwolmarans@f5.com
+----------------------------------------------
+Instructions: 
 
 Set your environment variables:
 
+export NGINX_NMS_HOSTNAME='10.1.1.6'
 export NGINX_NMS_USERNAME='admin'
-export NGINX_NMS_PASSWORD='NGINX123!@#'
+export NGINX_NMS_PASSWORD='admin'
+export NGINX_APIGW_USERNAME='brett'
+export NGINX_APIGW_PASSWORD='brett'
+export NGINX_APIGW_SSH_KEYFILE='brett-udf.key'
+export NGINX_DEVPORTAL_USERNAME='brett'
+export NGINX_DEVPORTAL_PASSWORD='brett'
+export NGINX_DEVPORTAL_SSH_KEYFILE='brett-udf.key'
 
+Then you can try out the example Python script which uses these modules, this script follows this lab guide https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html
+
+python3 nms_acm_udf_lab.py
+
+Workspace:
+  team-sentence
+    environments:
+      sentence-env
+         API Gateways:
+           dev.sentence.com:80 HTTPclusterName:devportal-cluster
+           api.sentence.com:80 HTTPclusterName:api-cluster
+           acm.dev.sentence.com:81 HTTPclusterName:devportal-cluster
+Creating ACM Workspace: team-sentence on https://10.1.1.6/api/acm/v1/infrastructure/workspaces
+>>> BEGIN ERROR MESSAGE >>>
+<Response [409]>
+b'{"code":200211,"message":"Error adding the workspace: the workspace already exists. Use a unique name for the workspace, then try again."}\n'
+>>> END   ERROR MESSAGE >>>
+>>> BEGIN ERROR MESSAGE >>>
+<Response [400]>
+b'{"code":200025,"message":"Error adding the environment: environment function(s) doesn\'t match with the proxy runtime specified."}\n'
+>>> END   ERROR MESSAGE >>>
+Workspace:
+  team-sentence
+    environments:
+      sentence-env
+         API Gateways:
+           dev.sentence.com:80 HTTPclusterName:devportal-cluster
+           api.sentence.com:80 HTTPclusterName:api-cluster
+           acm.dev.sentence.com:81 HTTPclusterName:devportal-cluster
+Overriding instance_group value from command line: api-cluster ...
+
+Sudo permissions detected
+
+
+
+nginx-agent is running, exiting install script. We recommend you stop the service to do an installation exiting.
+
+Overriding instance_group value from command line: devportal-cluster ...
+
+Sudo permissions detected
+
+
+
+nginx-agent is running, exiting install script. We recommend you stop the service to do an installation exiting.
+
+
+Docs are TBD.
+Ignore everything after this line until further notice. :-)
 ---------------------------------------------------SNIP------------------------------------------------------------------------
 
 Notes: 
