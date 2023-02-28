@@ -29,6 +29,9 @@ export NGINX_DEVPORTAL_SSH_KEYFILE='brett-udf.key'
 
 Then you can try out the example Python script which uses these modules, this script follows this lab guide https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html
 
+sudo apt update
+sudo apt install python3-pip
+pip install -r requirements.txt
 python3 nms_acm_udf_lab.py
 
 Workspace:
