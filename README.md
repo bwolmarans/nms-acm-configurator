@@ -31,6 +31,8 @@ sudo apt install python3-pip
 pip install -r requirements.txt    
 python3 nms_acm_udf_lab.py    
   
+Example Output
+--------------
   
 Workspace:  
   team-sentence  
