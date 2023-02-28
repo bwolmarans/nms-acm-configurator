@@ -7,15 +7,25 @@ Instructions:
 
 Set your environment variables:
 
+
 export NGINX_NMS_HOSTNAME='10.1.1.6'
+
 export NGINX_NMS_USERNAME='admin'
+
 export NGINX_NMS_PASSWORD='admin'
+
 export NGINX_APIGW_USERNAME='brett'
+
 export NGINX_APIGW_PASSWORD='brett'
+
 export NGINX_APIGW_SSH_KEYFILE='brett-udf.key'
+
 export NGINX_DEVPORTAL_USERNAME='brett'
+
 export NGINX_DEVPORTAL_PASSWORD='brett'
+
 export NGINX_DEVPORTAL_SSH_KEYFILE='brett-udf.key'
+
 
 Then you can try out the example Python script which uses these modules, this script follows this lab guide https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html
 
