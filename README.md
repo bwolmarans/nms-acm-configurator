@@ -10,6 +10,10 @@ Set your environment variables:
 
 export NGINX_NMS_HOSTNAME='10.1.1.6'
 
+export NGINX_APIGW_HOSTNAME='10.1.1.5'
+
+export NGINX_DEVPORTAL_HOSTNAME='10.1.1.9'
+
 export NGINX_NMS_USERNAME='admin'
 
 export NGINX_NMS_PASSWORD='admin'

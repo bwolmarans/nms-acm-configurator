@@ -161,7 +161,7 @@ def do_args():
     parser.add_argument('--password', help='The NMS login password NGINX_NMS_PASSWORD', default=os.environ.get('NGINX_NMS_PASSWORD'))
     parser.add_argument('--apigw_username', help='APIGW host login username NGINX_APIGW_USERNAME', default=os.environ.get('NGINX_APIGW_USERNAME'))
     parser.add_argument('--apigw_password', help='APIGW host login password NGINX_APIGW_PASSWORD', default=os.environ.get('NGINX_APIGW_PASSWORD'))
-    parser.add_argument('--apigw_key_file', help='APIGW host ssh key file NGINX_APIGW_SSH_KEYFILE', default=os.environ.get('NGINX_APIGW_SSH_KEYFILE')) 
+    parser.add_argument('--apigw_ssh_key_file', help='APIGW host ssh key file NGINX_APIGW_SSH_KEYFILE', default=os.environ.get('NGINX_APIGW_SSH_KEYFILE')) 
     parser.add_argument('--devportal_username', help='DevPortal host login username NGINX_DEVPORTAL_USERNAME', default=os.environ.get('NGINX_DEVPORTAL_USERNAME'))
     parser.add_argument('--devportal_password', help='DevPortal host login password NGINX_DEVPORTAL_PASSWORD', default=os.environ.get('NGINX_DEVPORTAL_PASSWORD')) 
     parser.add_argument('--devportal_ssh_key_file', help='DevPortal host ssh key file NGINX_DEVPORTAL_SSH_KEYFILE', default=os.environ.get('NGINX_DEVPORTAL_SSH_KEYFILE'))
@@ -307,9 +307,11 @@ if __name__ == '__main__':
     hostname = myargs.hostname
     username = myargs.username
     password = myargs.password
+    apigw_hostname = myargs.apigw_hostname
     apigw_username = myargs.apigw_username
     apigw_password = myargs.apigw_password
-    apigw_keyfile = myargs.apigw_key_file
+    apigw_ssh_key_file = myargs.apigw_ssh_key_file
+    devportal_hostname = myargs.devportal_hostname
     devportal_username = myargs.devportal_username
     devportal_password = myargs.devportal_password
     devportal_ssh_key_file = myargs.devportal_ssh_key_file
@@ -324,8 +326,8 @@ if __name__ == '__main__':
     #print(wss)
     acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
     display_acm_config(hostname, username, password)
-    acm_apigw_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
-    acm_devportal_onboard(hostname, '10.1.1.5', "brett", "brett", "brett-udf.key")
+    acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
+    acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
     # have to manually delete until figure out the big PUT statement to delete the environment
     #envs = acm_get_environments(hostname, username, password, "team-sentence")
     #print(envs)
