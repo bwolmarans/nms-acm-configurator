@@ -336,6 +336,16 @@ def acm_upload_api_doc(hostname, username, password, workspace, bunch_of_json):
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
+def acm_publish_to_proxy(hostname, username, password, backend_name, starget_hostname, starget_protocol, startget_port, apiproxy_name, use_openapi_sec, api_spec_name, gwproxy_hostname, devportal_also, portalproxy_hostname):
+    dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3])
+    data='{"name":"' + apiproxy_name + '","version":"v1","specRef":"' + api_spec_name + '","proxyConfig":{"hostname":"' + apiproxy_name + '","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":' + starget_port + '},"hostname":"' + starget_hostname + '"}],"serviceName":"' + backend_name + '"}]},"portalConfig":{"hostname":"' + portalproxy_hostname + '","category":"","targetProxyHost":"' + gwproxy_hostname + '"}}'
+    url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/api-docs"
+    print("Creating Service Workspace: " + workspace + " on " + url)
+    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    return r
+
+
+
 if __name__ == '__main__':
 
     secrets_gateway = SecretsGateway()
@@ -362,25 +372,25 @@ if __name__ == '__main__':
     #get_nginx_instances(hostname, username, password)
     #delete_offline_nginx_instances(hostname, username, password)
     #acm_delete_workspace(hostname, username, password, "team-sentence")
-    #display_acm_config(hostname, username, password)
-    #acm_create_workspace(hostname, username, password, "team-sentence")
+    display_acm_config(hostname, username, password)
+    acm_create_workspace(hostname, username, password, "team-sentence")
 
     #wss = acm_get_workspaces(hostname, username, password)
     #print(wss)
-    #acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
+    acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
     display_acm_config(hostname, username, password)
-    #acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
-    #acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
+    acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
+    acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
     # have to manually delete until figure out the big PUT statement to delete the environment
     #envs = acm_get_environments(hostname, username, password, "team-sentence")
     #print(envs)
-    #acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
+    acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
 
-    #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
-    #read the json in from the file
-    # read file
+    acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
     with open('v1', 'r') as myfile:
         data=myfile.read()
     acm_upload_api_doc(hostname, username, password, "sentence-app", data)
+    acm_publish_to_proxy(hostname, username, password, "sentence-svc", "10.1.20.7", "HTTP", "30511", "sentence-api", "YES", "api-sentence-generator-v1", "api.sentence.com", "YES", "dev.sentence.com")
+#  data='{"name":"' + apiproxy_name + 'sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}
 
 

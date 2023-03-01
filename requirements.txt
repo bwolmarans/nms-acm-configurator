@@ -1,4 +1,3 @@
-clint
 boto3
 PyYAML==6.0
 requests==2.22.0
