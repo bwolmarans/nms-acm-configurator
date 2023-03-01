@@ -247,10 +247,11 @@ def acm_delete_workspace(hostname, username, password, workspace):
 
 def acm_create_environment(hostname, username, password, workspace, environment, apicluster_name, apicluster_fqdn, devportal_name, devportal_fqdn):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    data = '{"name":"sentence-env","type":"NON-PROD",">>> welcome to functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
+    data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
+
 
 def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
