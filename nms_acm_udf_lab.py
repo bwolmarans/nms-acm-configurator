@@ -341,7 +341,7 @@ def acm_publish_to_proxy(hostname, username, password, workspace, backend_name, 
 
     data='{"name":"' + apiproxy_name + '","version":"v1","specRef":"' + api_spec_name + '","proxyConfig":{"hostname":"' + apiproxy_name + '","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":' + starget_port + '},"hostname":"' + starget_hostname + '"}],"serviceName":"' + backend_name + '"}]},"portalConfig":{"hostname":"' + portalproxy_hostname + '","category":"","targetProxyHost":"' + gwproxy_hostname + '"}}'
 
-    data='{"name":"sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}'
+    data='{"name":"sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api","basePathVersionAppendRule": "PREFIX","stripBasePathVersion": true},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}'
 
     #https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies?includes=versions&page=1&pageSize=10
     # https://10.1.1.6/api/acm/v1/services/workspaces/sentence-app/proxies
