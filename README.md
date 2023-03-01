@@ -21,11 +21,22 @@ export NGINX_DEVPORTAL_HOSTNAME='10.1.1.9'
 export NGINX_DEVPORTAL_USERNAME='ubuntu'    
 export NGINX_DEVPORTAL_PASSWORD='ubuntu'    
 export NGINX_DEVPORTAL_SSH_KEYFILE='/home/ubuntu/.ssh/brett-udf'    
+
+Get your Linux box ready for Python!
+
   
+sudo apt update    
+sudo apt install python3-pip    
+pip install -r requirements.txt    
   
-Then you can try out the example Python script which does in scripting form, all the manual steps of
+Then you can try out the example Python script:
+
+python3 nms_acm_udf_lab.py    
+
+This script does all the manual steps of
 Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
 This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
+
 
 Diagram
 -------
@@ -33,10 +44,6 @@ Diagram
 ![My Image](graphics/acm.png)
   
   
-sudo apt update    
-sudo apt install python3-pip    
-pip install -r requirements.txt    
-python3 nms_acm_udf_lab.py    
   
 Example Output
 --------------
