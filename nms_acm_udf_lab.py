@@ -256,11 +256,12 @@ def acm_create_environment(hostname, username, password, workspace, environment,
 def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     dprint("We are Paramiko'ing to: " + agent_host_username + "@" + agent_host_hostname + " using key " + agent_host_ssh_key )
-    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
-    dprint(x)#paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(agent_host_hostname, username=agent_host_username, password=agent_host_password, key_filename=agent_host_ssh_key)
+    x = 'systemctl stop nginx-agent'
+    stdin, stdout, stderr = client.exec_command(x)
+    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g devportal-cluster && sudo systemctl start nginx-agent'
     stdin, stdout, stderr = client.exec_command(x)
     for line in stdout:
         print(line)
@@ -273,12 +274,13 @@ def dprint(x):
 def acm_apigw_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     dprint(">>> welcome to function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     dprint("We are Paramiko'ing to: " + agent_host_username + "@" + agent_host_hostname + " using key " + agent_host_ssh_key )
-    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g api-cluster && sudo systemctl start nginx-agent'
-    dprint(x)
     #paramiko.util.log_to_file("paramiko.log", level = "DEBUG")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(agent_host_hostname, username=agent_host_username, password=agent_host_password, key_filename=agent_host_ssh_key)
+    x = 'systemctl stop nginx-agent'
+    stdin, stdout, stderr = client.exec_command(x)
+    x = 'curl -k https://' + nms_hostname + '/install/nginx-agent > install.sh && sudo sh install.sh -g api-cluster && sudo systemctl start nginx-agent'
     stdin, stdout, stderr = client.exec_command(x)
     for line in stdout:
         print(line)
