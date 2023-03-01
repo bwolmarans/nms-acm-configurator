@@ -23,7 +23,13 @@ export NGINX_DEVPORTAL_PASSWORD='ubuntu'
 export NGINX_DEVPORTAL_SSH_KEYFILE='/home/ubuntu/.ssh/brett-udf'    
   
   
-Then you can try out the example Python script which uses these modules, this script follows this lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
+Then you can try out the example Python script which does in scripting form, all the manual steps of
+Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
+This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
+
+Diagram
+-------
+
 ![My Image](graphics/acm.png)
   
   
