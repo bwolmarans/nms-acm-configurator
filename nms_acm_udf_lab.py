@@ -303,11 +303,22 @@ class SecretsGateway:
                 return json.loads(f.read())
         except FileNotFoundError:
             return {}
-def acm_create_workspace(hostname, username, admin, workspace):
+
+def acm_create_workspace(hostname, username, password, workspace):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
-    print("Creating ACM Workspace: " + workspace + " on " + url)
+    print("Creating Infrastructure Workspace: " + workspace + " on " + url)
+    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    return r
+
+
+def acm_create_service_workspace(hostname, username, password, workspace, environment):
+    dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
+    #data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}, "link": {"rel": "/v1/infrastructure/workspaces/infra/environments/" + environment}}'
+    data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}, "link": {"rel": "/v1/infrastructure/workspaces/infra/environments/' + environment + '"}}'
+    url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces"
+    print("Creating Service Workspace: " + workspace + " on " + url)
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
@@ -315,6 +326,15 @@ def acm_get_api_doc(url):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     dprint(url)
     os.system('wget ' + url)
+
+def acm_upload_api_doc(hostname, username, password, workspace, bunch_of_json):
+    #https://20e68db3-90b2-403c-977e-169a484f02a2.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/api-docs
+    dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3])
+    data=bunch_of_json
+    url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/api-docs"
+    print("Creating Service Workspace: " + workspace + " on " + url)
+    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    return r
 
 if __name__ == '__main__':
 
@@ -324,9 +344,6 @@ if __name__ == '__main__':
     #print(os.getenv('NGINX_NMS_USERNAME'))
 
     #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1?resolved=true&flatten=true&pretty=true', 'API-Sentence-2022-v1.yaml')
-    acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
-
-    quit()
 
     myargs = do_args()
 
@@ -345,18 +362,25 @@ if __name__ == '__main__':
     #get_nginx_instances(hostname, username, password)
     #delete_offline_nginx_instances(hostname, username, password)
     #acm_delete_workspace(hostname, username, password, "team-sentence")
-    display_acm_config(hostname, username, password)
-    acm_create_workspace(hostname, username, password, "team-sentence")
+    #display_acm_config(hostname, username, password)
+    #acm_create_workspace(hostname, username, password, "team-sentence")
 
     #wss = acm_get_workspaces(hostname, username, password)
     #print(wss)
-    acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
+    #acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
     display_acm_config(hostname, username, password)
-    acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
-    acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
+    #acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
+    #acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
     # have to manually delete until figure out the big PUT statement to delete the environment
     #envs = acm_get_environments(hostname, username, password, "team-sentence")
     #print(envs)
+    #acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
 
+    #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
+    #read the json in from the file
+    # read file
+    with open('v1', 'r') as myfile:
+        data=myfile.read()
+    acm_upload_api_doc(hostname, username, password, "sentence-app", data)
 
 
