@@ -63,6 +63,12 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
             r.raise_for_status()
             return r
 
+        if verb == "PUT":
+            r = requests.put(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
+                cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            r.raise_for_status()
+            return r
+
         if verb == "POST":
             r = requests.post(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
@@ -354,8 +360,8 @@ def acm_publish_to_proxy(hostname, username, password, workspace, backend_name, 
 
 if __name__ == '__main__':
 
-    secrets_gateway = SecretsGateway()
-    secrets = secrets_gateway.get_secrets()
+    #secrets_gateway = SecretsGateway()
+    #secrets = secrets_gateway.get_secrets()
     #print(secrets.get('NGINX_NMS_USERNAME'))
     #print(os.getenv('NGINX_NMS_USERNAME'))
 
@@ -384,7 +390,7 @@ if __name__ == '__main__':
     #wss = acm_get_workspaces(hostname, username, password)
     #print(wss)
     #acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
-    display_acm_config(hostname, username, password)
+    #display_acm_config(hostname, username, password)
     #acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
     #acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
     # have to manually delete until figure out the big PUT statement to delete the environment
@@ -393,14 +399,62 @@ if __name__ == '__main__':
     #acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
 
     #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
-    with open('v1', 'r') as myfile:
-        data=myfile.read()
+    #with open('v1', 'r') as myfile:
+    #    data=myfile.read()
     #acm_upload_api_doc(hostname, username, password, "sentence-app", data)
-    url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/sentence-app/proxies"
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password),verify=False)
-    print(r.content)
+    #url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/sentence-app/proxies"
+    #r = super_req("GET", url, auth = HTTPBasicAuth(username, password),verify=False)
+    #print(r.content)
     #DELETE https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies/sentence-api?hostname=api.sentence.com&version=v1
-    acm_publish_to_proxy(hostname, username, password, "sentence-app", "sentence-svc", "10.1.20.7", "HTTP", "30511", "sentence-api", "YES", "api-sentence-generator-v1", "api.sentence.com", "YES", "dev.sentence.com")
-#  data='{"name":"' + apiproxy_name + 'sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}
+    #acm_publish_to_proxy(hostname, username, password, "sentence-app", "sentence-svc", "10.1.20.7", "HTTP", "30511", "sentence-api", "YES", "api-sentence-generator-v1", "api.sentence.com", "YES", "dev.sentence.com")
 
+
+    data='\
+        {\
+                "name": "sentence-env",\
+                "proxies": [\
+                        {\
+                                "hostnames": [\
+                                        "dev.sentence.com"\
+                                ],\
+                                "policies": {\
+                                        "oidc-authz": [\
+                                                {\
+                                                        "metadata": {"labels": {"targetPolicyName": "default"}},\
+                                                        "action": {\
+                                                                "authFlowType": "PKCE",\
+                                                                "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth",\
+                                                                "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs",\
+                                                                "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout",\
+                                                                "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token",\
+                                                                "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo"\
+                                                        },\
+                                                },\
+                                        ]\
+                                },\
+                                "proxyClusterName": "devportal-cluster",\
+                        }\
+                ]\
+        }\
+        '
+    data='\
+        {\
+                "name": "sentence-env",\
+                "proxies": [\
+                        {\
+                                "hostnames": [\
+                                        "dev.sentence.com"\
+                                ],\
+                                "proxyClusterName": "devportal-cluster"\
+                        }\
+                ]\
+        }\
+        '
+
+    print(data)
+    #https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/infrastructure/workspaces/team-sentence/environments/sentence-env
+    url = 'https://' + hostname + "/" + acm_api_prefix
+    url = url + "/infrastructure/workspaces/team-sentence/environments/sentence-env"
+    r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    
 
