@@ -4,6 +4,7 @@ from __future__ import print_function
 import boto3
 
 import inspect
+import re
 import paramiko
 import yaml
 import json
@@ -465,9 +466,22 @@ if __name__ == '__main__':
     #print(r.content)
     data=json.loads(r.content)
     #print(x['proxies'][0]['policies'])
-    data['proxies'][0]['policies']['oidc-authz']=[ { "metadata": { "labels": { "targetPolicyName": "default" } }, "systemMetadata": { "appliedOn": "inbound", "context": "global" }, "action": { "authFlowType": "PKCE", "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth", "errorReturnConditions": { "noMatch": { "returnCode": 403 }, "notSupplied": { "returnCode": 401 } }, "forwardTokenToBackend": "access_token", "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs", "logOffEndpoint": " http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout", "returnTokenToClientOnLogin": "none", "tokenEndpoint": " http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token", "uris": { "loginURI": "/login", "logoutURI": "/logout", "redirectURI": "/_codexch", "userInfoURI": "/userinfo" }, "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo" }, "data": [ { "appName": "devportal", "clientID": "devportal", "scopes": "openid", "source": "ACM" } ] } ]
+    data['proxies'][0]['policies']['oidc-authz'] = [ { "metadata": { "labels": { "targetPolicyName": "default" } }, "systemMetadata": { "appliedOn": "inbound", "context": "global" }, "action": { "authFlowType": "PKCE", "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth", "errorReturnConditions": { "noMatch": { "returnCode": 403 }, "notSupplied": { "returnCode": 401 } }, "forwardTokenToBackend": "access_token", "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs", "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout", "returnTokenToClientOnLogin": "none", "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token", "uris": { "loginURI": "/login", "logoutURI": "/logout", "redirectURI": "/_codexch", "userInfoURI": "/userinfo" }, "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo" }, "data": [ { "appName": "devportal", "clientID": "devportal", "scopes": "openid", "source": "ACM" } ] } ]
     del data['_links']
     del data['id']
+    #del data['proxies'][0]['onboardingCommands']
+    #del data['proxies'][1]['onboardingCommands']
+    #del data['proxies'][2]['onboardingCommands']
+    data = str(data)
+    data = str(data).replace("'", '"')
+    data = str(data).replace('curl -k \"', 'curl -k')
+    data = str(data).replace('wget \"', 'wget ')
+    data = str(data).replace('False', 'false')
+    data = str(data).replace('True', 'true')
+    #data = re.sub("((?=\D)\w+):", r'"\1":',  data)
+    #data = re.sub(": ((?=\D)\w+)", r':"\1"',  data)
+    print(data)
+    #quit()
     r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     # Now, we simply have to add the PKCE stuff for keycloak here. 
 
