@@ -1,8 +1,7 @@
 NGINX NMS - ACM - Python Script
 ----------------------------------------------  
 
-This script does all the manual steps of
-Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
+This script does manual configuration steps 1 through 10 of Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
 This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
 
 Instructions:   
