@@ -1,7 +1,5 @@
 NGINX NMS - ACM - Python Script
 ----------------------------------------------  
-Description: This module provides common functions for NMS, especially ACM.  This is draft work in progress and is not ready for production.  
-Author: Brett Wolmarans, F5 bwolmarans@f5.com  
 
 This script does all the manual steps of
 Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
