@@ -67,7 +67,9 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         if verb == "PUT":
             r = requests.put(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            dprint(r)
             r.raise_for_status()
+            dprint(r)
             return r
 
         if verb == "POST":
@@ -335,7 +337,6 @@ def acm_get_api_doc(url):
     os.system('wget ' + url)
 
 def acm_upload_api_doc(hostname, username, password, workspace, bunch_of_json):
-    #https://20e68db3-90b2-403c-977e-169a484f02a2.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/api-docs
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3])
     data=bunch_of_json
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/api-docs"
@@ -350,12 +351,38 @@ def acm_publish_to_proxy(hostname, username, password, workspace, backend_name, 
 
     data='{"name":"sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api","basePathVersionAppendRule": "PREFIX","stripBasePathVersion": true},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}'
 
-    #https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies?includes=versions&page=1&pageSize=10
-    # https://10.1.1.6/api/acm/v1/services/workspaces/sentence-app/proxies
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/proxies"
     print("Creating API Proxy in Service Workspace " + workspace + " on " + url)
     r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
+
+
+def acm_add_env_policy(hostname, username, password, workspace, environment, policy_type, bunch_of_json):
+    url = 'https://' + hostname + "/" + acm_api_prefix
+    url = url + "/infrastructure/workspaces/" + workspace + "/environments/" + environment
+    data = ""
+    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    #print(r.content)
+    data=json.loads(r.content)
+    #print(x['proxies'][0]['policies'])
+    if policy_type == "oidc-authz":
+        data['proxies'][0]['policies']['oidc-authz'] = bunch_of_json
+        del data['_links']
+        del data['id']
+        #del data['proxies'][0]['onboardingCommands']
+        #del data['proxies'][1]['onboardingCommands']
+        #del data['proxies'][2]['onboardingCommands']
+        data = str(data)
+        data = str(data).replace("'", '"')
+        data = str(data).replace('curl -k \"', 'curl -k')
+        data = str(data).replace('wget \"', 'wget ')
+        data = str(data).replace('False', 'false')
+        data = str(data).replace('True', 'true')
+        #data = re.sub("((?=\D)\w+):", r'"\1":',  data)
+        #data = re.sub(": ((?=\D)\w+)", r':"\1"',  data)
+        #print(data)
+        #quit()
+        r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
 
 
 
@@ -365,8 +392,6 @@ if __name__ == '__main__':
     #secrets = secrets_gateway.get_secrets()
     #print(secrets.get('NGINX_NMS_USERNAME'))
     #print(os.getenv('NGINX_NMS_USERNAME'))
-
-    #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1?resolved=true&flatten=true&pretty=true', 'API-Sentence-2022-v1.yaml')
 
     myargs = do_args()
 
@@ -382,109 +407,57 @@ if __name__ == '__main__':
     devportal_password = myargs.devportal_password
     devportal_ssh_key_file = myargs.devportal_ssh_key_file
 
-    get_nginx_instances(hostname, username, password)
-    #delete_offline_nginx_instances(hostname, username, password)
-    #acm_delete_workspace(hostname, username, password, "team-sentence")
-    if False:
+    get_instances = 0
+    delete_offline = 0
+    delete_workspace = 0
+    display_config = 0
+    create_environment = 0
+    apigw_onboard = 0
+    devportal_onboard = 0
+    create_service = 0
+    publish_to_proxy = 0
+    create_policy = 1
+
+    if get_instances:
+        get_nginx_instances(hostname, username, password)
+    if delete_offline:
+        delete_offline_nginx_instances(hostname, username, password)
+    if delete_workspace:
+        acm_delete_workspace(hostname, username, password, "team-sentence")
+    if display_config:
         display_acm_config(hostname, username, password)
         acm_create_workspace(hostname, username, password, "team-sentence")
 
-    #wss = acm_get_workspaces(hostname, username, password)
-    #print(wss)
+    if False:
+        wss = acm_get_workspaces(hostname, username, password)
+        print(wss)
 
-    if False:
+    if create_environment:
         acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
+    if display_config:
         display_acm_config(hostname, username, password)
-    if False:
+    if apigw_onboard:
         acm_apigw_onboard(hostname, apigw_hostname, apigw_username, apigw_password, apigw_ssh_key_file)
+    if devportal_onboard:
         acm_devportal_onboard(hostname, devportal_hostname, devportal_username, devportal_password, devportal_ssh_key_file)
+
     # have to manually delete until figure out the big PUT statement to delete the environment
     #envs = acm_get_environments(hostname, username, password, "team-sentence")
     #print(envs)
-    if False:
+    #DELETE https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies/sentence-api?hostname=api.sentence.com&version=v1
+
+    if create_service:
         acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
         acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
         with open('v1', 'r') as myfile:
             data=myfile.read()
         acm_upload_api_doc(hostname, username, password, "sentence-app", data)
-    #url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/sentence-app/proxies"
-    #r = super_req("GET", url, auth = HTTPBasicAuth(username, password),verify=False)
-    #print(r.content)
-    #DELETE https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies/sentence-api?hostname=api.sentence.com&version=v1
-    #acm_publish_to_proxy(hostname, username, password, "sentence-app", "sentence-svc", "10.1.20.7", "HTTP", "30511", "sentence-api", "YES", "api-sentence-generator-v1", "api.sentence.com", "YES", "dev.sentence.com")
 
+    if publish_to_proxy:
+        acm_publish_to_proxy(hostname, username, password, "sentence-app", "sentence-svc", "10.1.20.7", "HTTP", "30511", "sentence-api", "YES", "api-sentence-generator-v1", "api.sentence.com", "YES", "dev.sentence.com")
 
-    data='\
-        {\
-                "name": "sentence-env",\
-                "proxies": [\
-                        {\
-                                "hostnames": [\
-                                        "dev.sentence.com"\
-                                ],\
-                                "policies": {\
-                                        "oidc-authz": [\
-                                                {\
-                                                        "metadata": {"labels": {"targetPolicyName": "default"}},\
-                                                        "action": {\
-                                                                "authFlowType": "PKCE",\
-                                                                "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth",\
-                                                                "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs",\
-                                                                "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout",\
-                                                                "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token",\
-                                                                "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo"\
-                                                        },\
-                                                },\
-                                        ]\
-                                },\
-                                "proxyClusterName": "devportal-cluster",\
-                        }\
-                ]\
-        }\
-        '
+    if create_policy:
+        bunch_of_json = [ { "metadata": { "labels": { "targetPolicyName": "default" } }, "systemMetadata": { "appliedOn": "inbound", "context": "global" }, "action": { "authFlowType": "PKCE", "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth", "errorReturnConditions": { "noMatch": { "returnCode": 403 }, "notSupplied": { "returnCode": 401 } }, "forwardTokenToBackend": "access_token", "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs", "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout", "returnTokenToClientOnLogin": "none", "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token", "uris": { "loginURI": "/login", "logoutURI": "/logout", "redirectURI": "/_codexch", "userInfoURI": "/userinfo" }, "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo" }, "data": [ { "appName": "devportal", "clientID": "devportal", "scopes": "openid", "source": "ACM" } ] } ]
+        acm_add_env_policy(hostname, username, password, "team-sentence", "sentence-env", "oidc-authz", bunch_of_json)
 
-
-    data='\
-        {\
-                "name": "sentence-env",\
-                "proxies": [\
-                        {\
-                                "hostnames": [\
-                                        "dev.sentence.com"\
-                                ],\
-                                "proxyClusterName": "devportal-cluster"\
-                        }\
-                ]\
-        }\
-        '
-
-    #print(data)
-    #https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/infrastructure/workspaces/team-sentence/environments/sentence-env
-    url = 'https://' + hostname + "/" + acm_api_prefix
-    url = url + "/infrastructure/workspaces/team-sentence/environments/sentence-env"
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-    #print(r.content)
-    data=json.loads(r.content)
-    #print(x['proxies'][0]['policies'])
-    data['proxies'][0]['policies']['oidc-authz'] = [ { "metadata": { "labels": { "targetPolicyName": "default" } }, "systemMetadata": { "appliedOn": "inbound", "context": "global" }, "action": { "authFlowType": "PKCE", "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth", "errorReturnConditions": { "noMatch": { "returnCode": 403 }, "notSupplied": { "returnCode": 401 } }, "forwardTokenToBackend": "access_token", "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs", "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout", "returnTokenToClientOnLogin": "none", "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token", "uris": { "loginURI": "/login", "logoutURI": "/logout", "redirectURI": "/_codexch", "userInfoURI": "/userinfo" }, "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo" }, "data": [ { "appName": "devportal", "clientID": "devportal", "scopes": "openid", "source": "ACM" } ] } ]
-    del data['_links']
-    del data['id']
-    #del data['proxies'][0]['onboardingCommands']
-    #del data['proxies'][1]['onboardingCommands']
-    #del data['proxies'][2]['onboardingCommands']
-    data = str(data)
-    data = str(data).replace("'", '"')
-    data = str(data).replace('curl -k \"', 'curl -k')
-    data = str(data).replace('wget \"', 'wget ')
-    data = str(data).replace('False', 'false')
-    data = str(data).replace('True', 'true')
-    #data = re.sub("((?=\D)\w+):", r'"\1":',  data)
-    #data = re.sub(": ((?=\D)\w+)", r':"\1"',  data)
-    print(data)
-    #quit()
-    r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-    # Now, we simply have to add the PKCE stuff for keycloak here. 
-
-    #r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
-    
 
