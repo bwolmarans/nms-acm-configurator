@@ -1,3 +1,12 @@
+#####################################################################
+# 
+#  Title: nms_acm_udf_lab.py
+#  Purpose: recreate the manual ACM UDF lab, in an automated fashion
+#  Author: Brett Wolmarans b.wolmarans@f5.com
+#  Note Well: This is a Script, not a Python Module
+#
+#####################################################################
+
 # for Python 2 compatibility
 from __future__ import print_function
 # for AWS secret manager
@@ -30,8 +39,11 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
-# GLOBALS
-first_host = False
+#####################################################################
+# 
+#      WE LOVE GLOBALS
+#
+#####################################################################
 acm_api_prefix = "api/acm/v1"
 nms_api_prefix = "api/platform/v1"
 proxies = { 'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080', }
@@ -40,15 +52,14 @@ debugme = False
 python_major_version = sys.version_info[0]
 python_minor_version = sys.version_info[1]
 
-def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
+def x_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, cookies=None, headers=None, data=None, proxies=None, stream=False, timeout=None, verify=True):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-
 
     if headers == None:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
     dprint("")
-    dprint("super_req debug info")
+    dprint("x_req debug info")
     dprint("--------------------")
     dprint("URL: " + url)
     dprint("Verb: " + verb)
@@ -61,6 +72,7 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
         if verb == "GET":
             r = requests.get(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            dprint(r)
             r.raise_for_status()
             return r
 
@@ -69,18 +81,19 @@ def super_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
             dprint(r)
             r.raise_for_status()
-            dprint(r)
             return r
 
         if verb == "POST":
             r = requests.post(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            dprint(r)
             r.raise_for_status()
             return r
 
         if verb == "DELETE":
             r = requests.delete(url, params=params, allow_redirects=allow_redirects, auth=auth, cert=cert, \
                 cookies=cookies, headers=headers, data=data, proxies=proxies, stream=stream, timeout=timeout, verify=verify)
+            dprint(r)
             r.raise_for_status()
             return r
 
@@ -98,7 +111,7 @@ def getstuff(username, password, hostname, path):
     url = 'https://' + hostname + "/" + acm_api_prefix + path
     dprint("We now try to get stuff from " + url)
     try:
-        r = sssuper_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = ssx_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         return r
     except:
         return None
@@ -111,7 +124,7 @@ def get_end(mypath, item = -1):
 def delete_offline_nginx_instances(hostname, username, password):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = "https://" + hostname + "/" + nms_api_prefix + "/systems"
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    r = x_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     t = r.text
     jl = json.loads(t)
     #print(json.dumps(jl, indent=2))
@@ -132,14 +145,14 @@ def delete_offline_nginx_instances(hostname, username, password):
                 path = "/systems/" + suid + "/instances/" + nuid
                 url = urljoin(the_url, nms_api_prefix + path)
                 print("DELETE offline instance" + url)
-                r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+                r = x_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
                 print(str(r))
 
 def get_nginx_instances(hostname, username, password):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = "https://" + hostname + "/" + nms_api_prefix + "/systems"
     try:
-        r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = x_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         r.raise_for_status()
 
         t = r.text
@@ -193,7 +206,7 @@ def display_acm_config(hostname, username, password):
         password = getpass("No password found, please enter password (typing hidden) :" )
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
     dprint("We now try to get stuff from " + url)
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    r = x_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     if r == None:
         return None
     jl = json.loads(r.text)
@@ -204,7 +217,7 @@ def display_acm_config(hostname, username, password):
         print("Workspace:")
         print("  " + workspace)
         url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/environments"
-        r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+        r = x_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
         if r == None:
             continue
         print("    environments:")
@@ -232,7 +245,7 @@ def acm_get_workspaces(hostname, username, password):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     wss = []
     url = "https://" + hostname + "/" + acm_api_prefix + "/" + "infrastructure/workspaces"
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    r = x_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     if r == None:
         return None
     jl = json.loads(r.text)
@@ -248,17 +261,17 @@ def acm_get_workspaces(hostname, username, password):
 def acm_delete_workspace(hostname, username, password, workspace):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     url = 'https://' + hostname + "/" + acm_api_prefix + "/" + "infrastructure/workspaces/" + workspace
-    r = super_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
+    r = x_req("DELETE", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
     return(r)
 
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 def acm_create_environment(hostname, username, password, workspace, environment, apicluster_name, apicluster_fqdn, devportal_name, devportal_fqdn):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     data = '{"name":"sentence-env","type":"NON-PROD","functions":["DEVPORTAL","API-GATEWAY"],"proxies":[{"hostnames":["' + devportal_fqdn + '"],"proxyClusterName":"' + devportal_name + '","runtime":"PORTAL-PROXY","policies":{}},{"hostnames":["' + apicluster_fqdn + '"],"proxyClusterName":"' + apicluster_name + '","runtime":"GATEWAY-PROXY","policies":{}}]}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces/" + workspace + "/" + "environments"
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 
@@ -318,7 +331,7 @@ def acm_create_workspace(hostname, username, password, workspace):
     data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/infrastructure/workspaces"
     print("Creating Infrastructure Workspace: " + workspace + " on " + url)
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 
@@ -328,7 +341,7 @@ def acm_create_service_workspace(hostname, username, password, workspace, enviro
     data='{"name": "' + workspace + '" , "metadata": {"description": "App Development Workspace"}, "link": {"rel": "/v1/infrastructure/workspaces/infra/environments/' + environment + '"}}'
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces"
     print("Creating Service Workspace: " + workspace + " on " + url)
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 def acm_get_api_doc(url):
@@ -341,7 +354,7 @@ def acm_upload_api_doc(hostname, username, password, workspace, bunch_of_json):
     data=bunch_of_json
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/api-docs"
     print("Creating Service Workspace: " + workspace + " on " + url)
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 def acm_publish_to_proxy(hostname, username, password, workspace, backend_name, starget_hostname, starget_protocol, starget_port, apiproxy_name, use_openapi_sec, api_spec_name, gwproxy_hostname, devportal_also, portalproxy_hostname):
@@ -353,7 +366,7 @@ def acm_publish_to_proxy(hostname, username, password, workspace, backend_name, 
 
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/proxies"
     print("Creating API Proxy in Service Workspace " + workspace + " on " + url)
-    r = super_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
 
@@ -361,7 +374,7 @@ def acm_add_env_policy(hostname, username, password, workspace, environment, pol
     url = 'https://' + hostname + "/" + acm_api_prefix
     url = url + "/infrastructure/workspaces/" + workspace + "/environments/" + environment
     data = ""
-    r = super_req("GET", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+    r = x_req("GET", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     #print(r.content)
     data=json.loads(r.content)
     #print(x['proxies'][0]['policies'])
@@ -382,7 +395,7 @@ def acm_add_env_policy(hostname, username, password, workspace, environment, pol
         #data = re.sub(": ((?=\D)\w+)", r':"\1"',  data)
         #print(data)
         #quit()
-        r = super_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
+        r = x_req("PUT", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
 
 
 
