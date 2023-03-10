@@ -39,6 +39,8 @@ Then you can try out the example Python script:
 
 python3 nms_acm_udf_lab.py    
 
+or with debugging goodness, add --debug true
+
 
 
 Diagram
