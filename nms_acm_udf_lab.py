@@ -6,9 +6,26 @@
 #  Note Well: This is a Script, not a Python Module
 #
 #####################################################################
-
 # for Python 2 compatibility
 from __future__ import print_function
+
+#####################################################################
+#
+#  These settings control the parts of the script.  
+#  Set to 1 to have that part run, set to 0 to skip it.
+#
+#####################################################################
+get_instances = 1
+delete_offline = 1
+delete_workspace = 1
+display_config = 1
+create_environment = 1
+apigw_onboard = 1
+devportal_onboard = 1
+create_service = 1
+publish_to_proxy = 1
+create_policy = 1
+
 # for AWS secret manager
 import boto3
 
@@ -105,17 +122,6 @@ def x_req(verb, url, params=None, allow_redirects=True, auth=None, cert=None, co
 
     except requests.exceptions.RequestException as e:
         print(">>>>>>>>> ERROR: " + str(e))
-
-def getstuff(username, password, hostname, path):
-    dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
-    url = 'https://' + hostname + "/" + acm_api_prefix + path
-    dprint("We now try to get stuff from " + url)
-    try:
-        r = ssx_req("GET", url, auth = HTTPBasicAuth(username, password), proxies=proxies, verify=False)
-        return r
-    except:
-        return None
-
 
 def get_end(mypath, item = -1):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
@@ -274,7 +280,6 @@ def acm_create_environment(hostname, username, password, workspace, environment,
     r = x_req("POST", url, auth = HTTPBasicAuth(username, password), data=data, proxies=proxies, verify=False)
     return r
 
-
 def acm_devportal_onboard(nms_hostname, agent_host_hostname, agent_host_username, agent_host_password, agent_host_ssh_key):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3]) 
     dprint("We are Paramiko'ing to: " + agent_host_username + "@" + agent_host_hostname + " using key " + agent_host_ssh_key )
@@ -420,16 +425,6 @@ if __name__ == '__main__':
     devportal_password = myargs.devportal_password
     devportal_ssh_key_file = myargs.devportal_ssh_key_file
 
-    get_instances = 0
-    delete_offline = 0
-    delete_workspace = 0
-    display_config = 0
-    create_environment = 0
-    apigw_onboard = 0
-    devportal_onboard = 0
-    create_service = 0
-    publish_to_proxy = 0
-    create_policy = 1
 
     if get_instances:
         get_nginx_instances(hostname, username, password)
