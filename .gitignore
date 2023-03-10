@@ -1,3 +1,5 @@
 *.key
 secrets.json
 init_env_vars.sh
+v1*
+v2*

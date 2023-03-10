@@ -21,15 +21,15 @@ from __future__ import print_function
 get_instances = 0
 delete_offline = 0
 delete_workspace = 0
-display_config = 1
-create_environment = 1
-apigw_onboard = 1
-devportal_onboard = 1
-create_service = 1
+display_config = 0
+create_environment = 0
+apigw_onboard = 0
+devportal_onboard = 0
+create_service = 0
 v1 = 1
 v2 = 0
 publish_to_proxy = 1
-create_policy = 1
+create_policy = 0
 
 # for AWS secret manager
 import boto3
@@ -370,9 +370,10 @@ def acm_upload_api_doc(hostname, username, password, workspace, bunch_of_json):
 def acm_publish_to_proxy(hostname, username, password, workspace, version, backend_name, starget_hostname, starget_protocol, starget_port, apiproxy_name, api_spec_name, gwproxy_hostname, devportal_also, portalproxy_hostname):
     dprint(">>> top of function: " + inspect.stack()[0][3] + " called from: " + inspect.stack()[1][3])
 
-    data='{"name":"' + apiproxy_name + '","version":"' + version + '","specRef":"' + api_spec_name + '","proxyConfig":{"hostname":"' + apiproxy_name + '","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":' + starget_port + '},"hostname":"' + starget_hostname + '"}],"serviceName":"' + backend_name + '"}]},"portalConfig":{"hostname":"' + portalproxy_hostname + '","category":"","targetProxyHost":"' + gwproxy_hostname + '"}}'
+    data='{"name":"' + apiproxy_name + '","version":"' + version + '","specRef":"' + api_spec_name + '","proxyConfig":{"hostname":"' + gwproxy_hostname + '","ingress":{"basePath":"/api"},"backends":[{"serviceTargets":[{"listener":{"port":' + starget_port + '},"hostname":"' + starget_hostname + '"}],"serviceName":"' + backend_name + '"}]},"portalConfig":{"hostname":"' + portalproxy_hostname + '","category":"","targetProxyHost":"' + gwproxy_hostname + '"}}'
 
     #data='{"name":"sentence-api","version":"v1","specRef":"api-sentence-generator-v1","proxyConfig":{"hostname":"api.sentence.com","ingress":{"basePath":"/api","basePathVersionAppendRule": "PREFIX","stripBasePathVersion": true},"backends":[{"serviceTargets":[{"listener":{"port":30511},"hostname":"10.1.20.7"}],"serviceName":"sentence-svc"}]},"portalConfig":{"hostname":"dev.sentence.com","category":"","targetProxyHost":"api.sentence.com"}}'
+
 
     url = 'https://' + hostname + "/" + acm_api_prefix + "/services/workspaces/" + workspace + "/proxies"
     print("Creating API Proxy in Service Workspace " + workspace + " on " + url)
@@ -463,14 +464,15 @@ if __name__ == '__main__':
         acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
 
     if v1:
-        acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
+        #acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
         with open('v1', 'r') as myfile:
             data=myfile.read()
-        acm_upload_api_doc(hostname, username, password, "sentence-app", data)
+        #acm_upload_api_doc(hostname, username, password, "sentence-app", data)
 
         if publish_to_proxy:
             acm_publish_to_proxy(hostname, username, password, "sentence-app", "v1",    "sentence-svc", "10.1.20.7",      "HTTP",           "30511",      "sentence-api", "api-sentence-generator-v1", "api.sentence.com", "YES",         "dev.sentence.com")
-            #acm_publish_to_proxy(hostname, username, password, version, backend_name,   starget_hostname, starget_protocol, starget_port, apiproxy_name,  api_spec_name,               gwproxy_hostname,   devportal_also, devportal_hostname):
+           #acm_publish_to_proxy(hostname, username, password, workspace,       version, backend_name,   starget_hostname, starget_protocol, starget_port, apiproxy_name,  api_spec_name,               gwproxy_hostname,   devportal_also, devportal_hostname):
+
 
     if v2:
         acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v2')
