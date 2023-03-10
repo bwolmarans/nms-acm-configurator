@@ -2,9 +2,12 @@
 # 
 #  Title: nms_acm_udf_lab.py
 #  Purpose: recreate the manual ACM UDF lab, in an automated fashion
+#  Repo: https://github.com/bwolmarans/nms-acm-configurator
 #  Author: Brett Wolmarans b.wolmarans@f5.com
 #  Note Well: This is a Script, not a Python Module
 #
+#  Instructions: full instructions are in the repo readme. 
+# 
 #####################################################################
 # for Python 2 compatibility
 from __future__ import print_function

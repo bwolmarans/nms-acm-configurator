@@ -3,13 +3,19 @@ NGINX Network Management Suite - ACM - Python Module
 Description: This module provides common functions for NMS, especially ACM.  This is draft work in progress and is not ready for production.  
 Author: Brett Wolmarans, F5 bwolmarans@f5.com  
 
+This script does all the manual steps of
+Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
+This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
+
 Instructions:   
 -------------------------
 
   
-Set your environment variables:  
+1. Set your environment variables:  
+( you can source set_environment.sh if you like )
   
-  
+Most of these are self explanatory.  
+
 export NGINX_NMS_HOSTNAME='10.1.1.6'    
 export NGINX_NMS_USERNAME='admin'    
 export NGINX_NMS_PASSWORD='admin'    
@@ -22,20 +28,18 @@ export NGINX_DEVPORTAL_USERNAME='ubuntu'
 export NGINX_DEVPORTAL_PASSWORD='ubuntu'    
 export NGINX_DEVPORTAL_SSH_KEYFILE='/home/ubuntu/.ssh/brett-udf'    
 
-Get your Linux box ready for Python!
+2. Get your Linux box ready for Python!
 
-  
 sudo apt update    
 sudo apt install python3-pip    
 pip install -r requirements.txt    
+
+3. Set up your SSH keys on the devportal and apigw host, and on the host you are running this script from.
   
 Then you can try out the example Python script:
 
 python3 nms_acm_udf_lab.py    
 
-This script does all the manual steps of
-Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
-This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
 
 
 Diagram
