@@ -8,6 +8,8 @@ The main file is nms_acm_udf_lab.py
 
 This script does in an automated fashion, the configuration of modules 1 through 6 of Matthieu Dierick's UDF Lab "Nginx NMS API Connectivity Manager (ACM)"
 This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/html/class10/class10.html  
+Using the functions in this script, you can of course do all sorts of other things besides that lab.
+
 
 Instructions:   
 -------------------------
