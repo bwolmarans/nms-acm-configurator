@@ -52,7 +52,7 @@ Diagram
 
 ![My Image](graphics/acm.png)
   
-  
+![My Image](graphics/nms-acm-configurator.gif)  
   
 Example Output
 --------------
