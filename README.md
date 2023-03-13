@@ -12,7 +12,7 @@ This is the manual lab guide: https://clouddocs.f5.com/training/community/nginx/
 Instructions:   
 -------------------------
 
-0. Deploy the UDF, clone this repo to one of the ubuntu boxes in the UDF, and then run this script there.
+0. Deploy the UDF "Nginx NMS API Connectivity Manager (ACM)" then clone this repo to one of the ubuntu boxes in the UDF, and then run this script there.
   
 1. Set your environment variables:  
 ( you can source set_environment.sh if you like )
