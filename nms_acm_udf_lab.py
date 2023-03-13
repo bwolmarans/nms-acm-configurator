@@ -21,7 +21,7 @@ from __future__ import print_function
 get_instances = 0
 delete_offline = 0
 delete_workspace = 0
-display_config = 0
+display_config = 1
 create_workspace = 1
 create_environment = 1
 apigw_onboard = 1
@@ -448,6 +448,7 @@ if __name__ == '__main__':
         wss = acm_get_workspaces(hostname, username, password)
         print(wss)
 
+    time.sleep(5)
     if create_environment:
         acm_create_environment(hostname, username, password, "team-sentence", "sentence-env", "api-cluster", "api.sentence.com", "devportal-cluster", "dev.sentence.com")
     if display_config:
@@ -462,9 +463,11 @@ if __name__ == '__main__':
     #print(envs)
     #DELETE https://9041cffd-ed40-477c-ae48-8071f9b2e05d.access.udf.f5.com/api/acm/v1/services/workspaces/sentence-app/proxies/sentence-api?hostname=api.sentence.com&version=v1
 
+    time.sleep(5)
     if create_service:
         acm_create_service_workspace(hostname, username, password, "sentence-app", "sentence-env")
 
+    time.sleep(5)
     if v1:
         acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v1')
         with open('v1', 'r') as myfile:
@@ -474,6 +477,7 @@ if __name__ == '__main__':
         if publish_to_proxy:
             acm_publish_to_proxy(hostname, username, password, "sentence-app", "v1",    "sentence-svc", "10.1.20.7",      "HTTP",           "30511",      "sentence-api", "api-sentence-generator-v1", "api.sentence.com", "YES",         "dev.sentence.com")
 
+    time.sleep(5)
 
     if v2:
         acm_get_api_doc('https://app.swaggerhub.com/apiproxy/registry/F5EMEASSA/API-Sentence-2022/v2')
@@ -483,9 +487,11 @@ if __name__ == '__main__':
 
         if publish_to_proxy:
             acm_publish_to_proxy(hostname, username, password, "sentence-app", "v2",    "sentence-svc", "10.1.20.7",      "HTTP",           "30511",      "sentence-api", "api-sentence-generator-v2", "api.sentence.com", "YES",         "dev.sentence.com")
-
+    time.sleep(10)
     if create_policy:
         bunch_of_json = [ { "metadata": { "labels": { "targetPolicyName": "default" } }, "systemMetadata": { "appliedOn": "inbound", "context": "global" }, "action": { "authFlowType": "PKCE", "authorizationEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/auth", "errorReturnConditions": { "noMatch": { "returnCode": 403 }, "notSupplied": { "returnCode": 401 } }, "forwardTokenToBackend": "access_token", "jwksURI": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/certs", "logOffEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/logout", "returnTokenToClientOnLogin": "none", "tokenEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/token", "uris": { "loginURI": "/login", "logoutURI": "/logout", "redirectURI": "/_codexch", "userInfoURI": "/userinfo" }, "userInfoEndpoint": "http://10.1.1.4:8080/realms/devportal/protocol/openid-connect/userinfo" }, "data": [ { "appName": "devportal", "clientID": "devportal", "scopes": "openid", "source": "ACM" } ] } ]
         acm_add_env_policy(hostname, username, password, "team-sentence", "sentence-env", "oidc-authz", bunch_of_json)
 
+    if display_config:
+        display_acm_config(hostname, username, password)
 
